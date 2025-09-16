@@ -1,8 +1,13 @@
-
 export enum TestCaseCategory {
   POSITIVE = 'Positive',
   NEGATIVE = 'Negative',
   EDGE_CASE = 'Edge Case',
+}
+
+export enum ALMPlatform {
+  JIRA = 'Jira',
+  POLARION = 'Polarion',
+  AZURE_DEVOPS = 'Azure DevOps',
 }
 
 export interface TestCase {
@@ -14,9 +19,10 @@ export interface TestCase {
   expectedResult: string;
   preConditions?: string;
   testData?: string;
-  jiraStatus: JiraStatus;
-  jiraIssueKey?: string | null;
-  jiraError?: string | null;
+  sourceFile?: string;
+  almStatus: ALMStatus;
+  almIssueKey?: string | null;
+  almError?: string | null;
 }
 
 export interface TestStep {
@@ -35,9 +41,14 @@ export interface GeneratedTestCaseData {
   testData?: string;
 }
 
-export enum JiraStatus {
+export enum ALMStatus {
   IDLE = 'idle',
   LOADING = 'loading',
   SUCCESS = 'success',
   ERROR = 'error',
+}
+
+export interface BatchReport {
+  success: { file: string; count: number }[];
+  failed: { file: string; reason: string }[];
 }

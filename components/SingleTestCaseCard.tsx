@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { type TestCase, TestCaseCategory, JiraStatus } from '../types';
-import { JiraIntegration } from './JiraIntegration';
+import { type TestCase, TestCaseCategory, ALMStatus, ALMPlatform } from '../types';
+import { AlmIntegration } from './AlmIntegration';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { PencilIcon } from './Icons';
 
 interface SingleTestCaseCardProps {
   testCase: TestCase;
-  onJiraStatusUpdate: (testCaseId: string, status: JiraStatus, result?: { issueKey?: string, error?: string }) => void;
+  onAlmStatusUpdate: (testCaseId: string, status: ALMStatus, result?: { issueKey?: string, error?: string }) => void;
   onTestCaseUpdate: (testCase: TestCase) => void;
+  almPlatform: ALMPlatform;
 }
 
 const categoryStyles: { [key in TestCaseCategory]: { bg: string; text: string; border: string } } = {
@@ -50,7 +51,7 @@ const EditableField: React.FC<{ label: string; value: string; onChange: (value: 
 };
 
 
-export const SingleTestCaseCard: React.FC<SingleTestCaseCardProps> = ({ testCase, onJiraStatusUpdate, onTestCaseUpdate }) => {
+export const SingleTestCaseCard: React.FC<SingleTestCaseCardProps> = ({ testCase, onAlmStatusUpdate, onTestCaseUpdate, almPlatform }) => {
   const styles = categoryStyles[testCase.category] || categoryStyles[TestCaseCategory.POSITIVE];
   const [isEditing, setIsEditing] = useState(false);
   const [editedTestCase, setEditedTestCase] = useState<TestCase>(testCase);
@@ -59,8 +60,8 @@ export const SingleTestCaseCard: React.FC<SingleTestCaseCardProps> = ({ testCase
     setEditedTestCase(testCase);
   }, [testCase]);
 
-  const handleUpdate = (status: JiraStatus, result?: { issueKey?: string, error?: string }) => {
-    onJiraStatusUpdate(testCase.id, status, result);
+  const handleUpdate = (status: ALMStatus, result?: { issueKey?: string, error?: string }) => {
+    onAlmStatusUpdate(testCase.id, status, result);
   };
 
   const handleInputChange = (field: keyof Omit<TestCase, 'steps'>, value: string) => {
@@ -185,7 +186,7 @@ export const SingleTestCaseCard: React.FC<SingleTestCaseCardProps> = ({ testCase
           </Section>
         </div>
 
-        <JiraIntegration testCase={testCase} onUpdate={handleUpdate} />
+        <AlmIntegration testCase={testCase} platform={almPlatform} onUpdate={handleUpdate} />
       </div>
     </article>
   );

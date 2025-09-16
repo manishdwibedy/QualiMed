@@ -1,37 +1,35 @@
-
-
 import React from 'react';
-// Fix: Use ALMStatus instead of the non-existent JiraStatus.
-import { type TestCase, ALMStatus } from '../types';
-import { createJiraTicket } from '../services/jiraService';
+import { type TestCase, ALMStatus, ALMPlatform } from '../types';
+import { createAlmTicket } from '../services/almService';
 import { CheckCircleIcon, XCircleIcon } from './Icons';
 
-interface JiraIntegrationProps {
+interface AlmIntegrationProps {
   testCase: TestCase;
-  // Fix: Use ALMStatus in the onUpdate prop signature.
+  platform: ALMPlatform;
   onUpdate: (status: ALMStatus, result?: { issueKey?: string; error?: string }) => void;
 }
 
-export const JiraIntegration: React.FC<JiraIntegrationProps> = ({ testCase, onUpdate }) => {
+export const AlmIntegration: React.FC<AlmIntegrationProps> = ({ testCase, platform, onUpdate }) => {
   
   const handleCreateTicket = async () => {
-    // Fix: Use ALMStatus enum members.
     onUpdate(ALMStatus.LOADING);
-    const result = await createJiraTicket(testCase);
+    const result = await createAlmTicket(testCase, platform);
 
     if (result.success && result.issueKey) {
-      // Fix: Use ALMStatus enum members.
       onUpdate(ALMStatus.SUCCESS, { issueKey: result.issueKey });
     } else {
-      // Fix: Use ALMStatus enum members.
       onUpdate(ALMStatus.ERROR, { error: result.error || 'An unknown error occurred.' });
     }
   };
+  
+  const platformActionText = {
+      [ALMPlatform.JIRA]: 'Create Jira Ticket',
+      [ALMPlatform.POLARION]: 'Create Polarion Item',
+      [ALMPlatform.AZURE_DEVOPS]: 'Create DevOps Item',
+  }
 
   const renderContent = () => {
-    // Fix: Use almStatus property which exists on TestCase type.
     switch (testCase.almStatus) {
-      // Fix: Use ALMStatus enum members.
       case ALMStatus.LOADING:
         return (
           <div className="flex items-center text-slate-500 dark:text-slate-400">
@@ -39,25 +37,21 @@ export const JiraIntegration: React.FC<JiraIntegrationProps> = ({ testCase, onUp
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            <span>Creating Jira ticket...</span>
+            <span>Creating {platform} item...</span>
           </div>
         );
-      // Fix: Use ALMStatus enum members.
       case ALMStatus.SUCCESS:
         return (
           <div className="flex items-center text-green-600 dark:text-green-400">
             <CheckCircleIcon className="w-6 h-6 mr-2" />
-            {/* Fix: Use almIssueKey property which exists on TestCase type. */}
-            <span>Success! Jira ticket created: <strong>{testCase.almIssueKey}</strong></span>
+            <span>Success! {platform} item created: <strong>{testCase.almIssueKey}</strong></span>
           </div>
         );
-      // Fix: Use ALMStatus enum members.
       case ALMStatus.ERROR:
         return (
           <div className="flex flex-col sm:flex-row items-start sm:items-center text-red-600 dark:text-red-400">
             <div className="flex items-center flex-shrink-0">
               <XCircleIcon className="w-6 h-6 mr-2" />
-              {/* Fix: Use almError property which exists on TestCase type. */}
               <span>Error: {testCase.almError}</span>
             </div>
             <button
@@ -68,7 +62,6 @@ export const JiraIntegration: React.FC<JiraIntegrationProps> = ({ testCase, onUp
             </button>
           </div>
         );
-      // Fix: Use ALMStatus enum members.
       case ALMStatus.IDLE:
       default:
         return (
@@ -76,7 +69,7 @@ export const JiraIntegration: React.FC<JiraIntegrationProps> = ({ testCase, onUp
             onClick={handleCreateTicket}
             className="px-5 py-2.5 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 disabled:bg-slate-400 transform hover:scale-105 transition-all duration-200 ease-in-out"
           >
-            Create Jira Ticket
+            {platformActionText[platform] || 'Create Ticket'}
           </button>
         );
     }

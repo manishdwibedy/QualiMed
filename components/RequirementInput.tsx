@@ -7,9 +7,8 @@ interface RequirementInputProps {
   setRequirement: (value: string) => void;
   onGenerate: () => void;
   isLoading: boolean;
-  isParsing: boolean;
-  file: File | null;
-  onFileChange: (file: File | null) => void;
+  files: File[];
+  onFilesChange: (files: File[]) => void;
 }
 
 export const RequirementInput: React.FC<RequirementInputProps> = ({ 
@@ -17,18 +16,15 @@ export const RequirementInput: React.FC<RequirementInputProps> = ({
   setRequirement, 
   onGenerate, 
   isLoading,
-  isParsing,
-  file,
-  onFileChange 
+  files,
+  onFilesChange 
 }) => {
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
-    if (acceptedFiles.length > 0) {
-      onFileChange(acceptedFiles[0]);
-    }
-  }, [onFileChange]);
+    onFilesChange([...files, ...acceptedFiles]);
+  }, [onFilesChange, files]);
 
-  const isDisabled = isLoading || isParsing;
+  const isDisabled = isLoading;
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -36,28 +32,32 @@ export const RequirementInput: React.FC<RequirementInputProps> = ({
         'application/pdf': ['.pdf'],
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
     },
-    multiple: false,
     disabled: isDisabled,
   });
 
-  const handleRemoveFile = (e: React.MouseEvent) => {
+  const handleRemoveFile = (e: React.MouseEvent, fileToRemove: File) => {
     e.stopPropagation();
-    onFileChange(null);
+    onFilesChange(files.filter(f => f !== fileToRemove));
   };
+  
+  const handleRemoveAll = () => {
+    onFilesChange([]);
+  }
 
-  const isButtonDisabled = isDisabled || (!requirement.trim() && !file);
+  const isButtonDisabled = isDisabled || (!requirement.trim() && files.length === 0);
+  const buttonText = files.length > 0 ? `Start Batch Generation (${files.length} ${files.length === 1 ? 'File' : 'Files'})` : 'Generate Test Suite';
 
   return (
     <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 space-y-4">
       <div>
         <label htmlFor="requirement-input" className="block text-lg font-semibold mb-2 text-slate-700 dark:text-slate-300">
-          Requirement Context / Prompt
+          Requirement Context / Prompt (Applies to all documents)
         </label>
         <textarea
           id="requirement-input"
           value={requirement}
           onChange={(e) => setRequirement(e.target.value)}
-          placeholder="e.g., Generate test cases for the login feature described in the attached document."
+          placeholder="e.g., Generate security test cases for the features described in the attached document(s)."
           className="w-full h-24 p-3 bg-slate-100 dark:bg-slate-700 border-2 border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition duration-200 resize-none"
           disabled={isDisabled}
           aria-label="Software Requirement Context Input"
@@ -66,7 +66,7 @@ export const RequirementInput: React.FC<RequirementInputProps> = ({
 
       <div>
         <label className="block text-lg font-semibold mb-2 text-slate-700 dark:text-slate-300">
-          Upload Requirements Document (Optional)
+          Upload Requirements Documents
         </label>
         <div 
           {...getRootProps()} 
@@ -75,47 +75,42 @@ export const RequirementInput: React.FC<RequirementInputProps> = ({
             ${isDisabled ? 'cursor-not-allowed opacity-50' : ''}`}
         >
           <input {...getInputProps()} />
-          {file ? (
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <FileIcon className="w-8 h-8 text-sky-500" />
-                <div>
-                  <p className="font-semibold text-slate-800 dark:text-slate-200">{file.name}</p>
-                   {isParsing ? (
-                    <div className="flex items-center text-sm text-sky-600 dark:text-sky-400">
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Parsing document...
-                    </div>
-                  ) : (
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
-                      {(file.size / 1024).toFixed(2)} KB
-                    </p>
-                  )}
-                </div>
-              </div>
-              <button 
-                onClick={handleRemoveFile} 
-                disabled={isDisabled}
-                className="p-1.5 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                aria-label="Remove file"
-              >
-                <XIcon className="w-5 h-5" />
-              </button>
-            </div>
-          ) : (
-            <div className="text-center text-slate-500 dark:text-slate-400">
+          <div className="text-center text-slate-500 dark:text-slate-400">
               <UploadCloudIcon className="w-10 h-10 mx-auto mb-2" />
               <p className="font-semibold">
-                {isDragActive ? "Drop the file here..." : "Drag & drop a file here, or click to select"}
+                {isDragActive ? "Drop the files here..." : "Drag & drop files or a folder here, or click to select"}
               </p>
               <p className="text-sm">PDF or DOCX</p>
             </div>
-          )}
         </div>
       </div>
+      
+      {files.length > 0 && (
+         <div className="space-y-2">
+            <div className="flex justify-between items-center">
+                <h4 className="font-semibold">{files.length} file{files.length > 1 && 's'} selected</h4>
+                <button onClick={handleRemoveAll} disabled={isDisabled} className="text-sm text-sky-600 hover:text-sky-800 dark:text-sky-400 dark:hover:text-sky-200 disabled:opacity-50">Clear all</button>
+            </div>
+            <ul className="max-h-40 overflow-y-auto space-y-2 rounded-lg border border-slate-200 dark:border-slate-700 p-2">
+                {files.map((file, index) => (
+                    <li key={index} className="flex items-center justify-between bg-slate-100 dark:bg-slate-700 p-2 rounded-md">
+                        <div className="flex items-center space-x-2 overflow-hidden">
+                            <FileIcon className="w-5 h-5 flex-shrink-0" />
+                            <span className="truncate" title={file.name}>{file.name}</span>
+                        </div>
+                        <button 
+                            onClick={(e) => handleRemoveFile(e, file)} 
+                            disabled={isDisabled}
+                            className="p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors disabled:opacity-50"
+                            aria-label={`Remove ${file.name}`}
+                        >
+                            <XIcon className="w-4 h-4" />
+                        </button>
+                    </li>
+                ))}
+            </ul>
+        </div>
+      )}
 
       <div className="mt-4 flex justify-end">
         <button
@@ -130,10 +125,10 @@ export const RequirementInput: React.FC<RequirementInputProps> = ({
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              Generating...
+              Processing...
             </>
           ) : (
-            'Generate Test Suite'
+            buttonText
           )}
         </button>
       </div>
