@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { type GeneratedTestCaseData, TestCaseCategory } from '../types';
 
@@ -34,34 +33,66 @@ const schema = {
         type: Type.STRING,
         description: "The expected result or system response after the action is completed (e.g., 'an error message is displayed, and access is denied').",
       },
+      preConditions: {
+        type: Type.STRING,
+        description: "Optional: Any pre-conditions that must be met before the test step can be executed (e.g., 'User must have an active account'). If none, this can be omitted."
+      },
+      testData: {
+        type: Type.STRING,
+        description: "Optional: Specific data values to be used in the test (e.g., 'Username: testuser, Password: WrongPassword123'). If none, this can be omitted."
+      },
     },
     required: ["category", "title", "actor", "action", "expectedOutcome"],
   }
 };
 
 /**
- * Generates a structured test case suite from a plain text requirement.
- * @param requirement - The software requirement in plain text.
+ * Generates a structured test case suite from a plain text requirement and/or a document.
+ * @param requirement - The software requirement in plain text, which can also provide context for the document.
+ * @param file - An optional file object containing mimeType and base64 data.
  * @returns A promise that resolves to an array of generated test cases.
  */
-export async function generateTestCaseFromRequirement(requirement: string): Promise<GeneratedTestCaseData[]> {
+export async function generateTestCaseFromRequirement(
+  requirement: string, 
+  file: { mimeType: string, data: string } | null
+): Promise<GeneratedTestCaseData[]> {
+  
   const prompt = `
     You are an expert Software Quality Assurance Engineer specializing in mission-critical healthcare systems.
-    Your task is to analyze the following software requirement and generate a comprehensive suite of test cases.
-    For the given requirement, create at least three test cases:
-    1.  A 'Positive' test case for the primary success scenario (the "happy path").
-    2.  A 'Negative' test case covering invalid inputs, error conditions, or unauthorized actions.
-    3.  An 'Edge Case' test case that explores boundaries, unusual combinations of inputs, or system limits.
+    Your task is to analyze the following software requirement and/or the attached document.
+    Identify all individual requirements, paying close attention to bullet points or numbered lists.
+    For each identified requirement, generate a comprehensive suite of test cases.
+    This suite must include 'Positive', 'Negative', and 'Edge Case' scenarios.
 
-    For each test case, you must extract and define the category, a concise title, the actor, the specific action (including conditions), and the precise expected outcome.
+    For each test case, you must extract and define the following:
+    - category: The type of test case.
+    - title: A concise, descriptive title.
+    - actor: The user or system performing the action.
+    - action: The specific action being performed.
+    - expectedOutcome: The precise expected result.
+    - preConditions (if applicable): Any pre-condition that must be true, often found in 'Given...' clauses.
+    - testData (if applicable): Any specific example data mentioned for testing.
 
-    Requirement: "${requirement}"
+    Context: "${requirement}"
   `;
+
+  // FIX: The type `GenerateContentRequest` is deprecated and no longer exported from `@google/genai`.
+  // The explicit type annotation has been removed in favor of TypeScript's type inference.
+  const contents = { parts: [{ text: prompt }] };
+
+  if (file) {
+    contents.parts.push({
+      inlineData: {
+        mimeType: file.mimeType,
+        data: file.data,
+      },
+    });
+  }
 
   try {
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
-      contents: prompt,
+      contents: contents,
       config: {
         responseMimeType: "application/json",
         responseSchema: schema,
@@ -72,16 +103,10 @@ export async function generateTestCaseFromRequirement(requirement: string): Prom
     const jsonText = response.text.trim();
     const parsedData = JSON.parse(jsonText);
 
-    if (Array.isArray(parsedData) && parsedData.every(item => 
-        typeof item.category === 'string' &&
-        typeof item.title === 'string' &&
-        typeof item.actor === 'string' &&
-        typeof item.action === 'string' &&
-        typeof item.expectedOutcome === 'string'
-    )) {
-        return parsedData as GeneratedTestCaseData[];
+    if (Array.isArray(parsedData) && parsedData.length > 0) {
+      return parsedData as GeneratedTestCaseData[];
     } else {
-        throw new Error("Invalid data structure received from API. Expected an array of test cases.");
+      throw new Error("The AI model did not return any valid test cases. Please refine your input.");
     }
 
   } catch (error) {

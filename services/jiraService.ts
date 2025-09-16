@@ -10,6 +10,81 @@ import { type TestCase } from '../types';
 export async function createJiraTicket(testCase: TestCase): Promise<{ success: boolean; issueKey?: string; error?: string }> {
   console.log('Simulating Jira ticket creation...');
   
+  const descriptionContent: any[] = [
+    {
+      type: 'paragraph',
+      content: [
+        {
+          type: 'text',
+          text: 'Original Requirement Context: ' + testCase.requirement,
+        },
+      ],
+    },
+  ];
+
+  if (testCase.preConditions) {
+    descriptionContent.push(
+      {
+        type: 'heading',
+        attrs: { level: 2 },
+        content: [{ type: 'text', text: 'Pre-Conditions' }],
+      },
+      {
+        type: 'paragraph',
+        content: [{ type: 'text', text: testCase.preConditions }],
+      }
+    );
+  }
+  
+  descriptionContent.push(
+    {
+      type: 'heading',
+      attrs: { level: 2 },
+      content: [{ type: 'text', text: 'Test Steps' }],
+    },
+    {
+      type: 'orderedList',
+      content: testCase.steps.map(step => ({
+        type: 'listItem',
+        content: [
+          {
+            type: 'paragraph',
+            content: [
+              { type: 'text', text: `As ${step.actor}, ${step.action}.` },
+            ],
+          },
+        ],
+      })),
+    }
+  );
+  
+  if (testCase.testData) {
+    descriptionContent.push(
+      {
+        type: 'heading',
+        attrs: { level: 2 },
+        content: [{ type: 'text', text: 'Test Data' }],
+      },
+      {
+        type: 'paragraph',
+        content: [{ type: 'text', text: testCase.testData }],
+      }
+    );
+  }
+
+  descriptionContent.push(
+    {
+      type: 'heading',
+      attrs: { level: 2 },
+      content: [{ type: 'text', text: 'Expected Result' }],
+    },
+    {
+      type: 'paragraph',
+      content: [{ type: 'text', text: testCase.expectedResult }],
+    }
+  );
+
+
   // This is the payload you would send to the Jira API
   const jiraPayload = {
     fields: {
@@ -20,45 +95,7 @@ export async function createJiraTicket(testCase: TestCase): Promise<{ success: b
       description: {
         type: 'doc',
         version: 1,
-        content: [
-          {
-            type: 'paragraph',
-            content: [
-              {
-                type: 'text',
-                text: 'Original Requirement: ' + testCase.requirement,
-              },
-            ],
-          },
-          {
-            type: 'heading',
-            attrs: { level: 2 },
-            content: [{ type: 'text', text: 'Test Steps' }],
-          },
-          {
-            type: 'orderedList',
-            content: testCase.steps.map(step => ({
-              type: 'listItem',
-              content: [
-                {
-                  type: 'paragraph',
-                  content: [
-                    { type: 'text', text: `As ${step.actor}, ${step.action}.` },
-                  ],
-                },
-              ],
-            })),
-          },
-          {
-            type: 'heading',
-            attrs: { level: 2 },
-            content: [{ type: 'text', text: 'Expected Result' }],
-          },
-          {
-            type: 'paragraph',
-            content: [{ type: 'text', text: testCase.expectedResult }],
-          },
-        ],
+        content: descriptionContent,
       },
       issuetype: {
         name: 'Test Case', // Or 'Test', depending on your Jira configuration

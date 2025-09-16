@@ -5,16 +5,42 @@ import { TestCaseDisplay } from './components/TestCaseDisplay';
 import { Loader } from './components/Loader';
 import { type TestCase, JiraStatus } from './types';
 import { generateTestCaseFromRequirement } from './services/geminiService';
+import { FileIcon } from './components/Icons';
 
 const App: React.FC = () => {
-  const [requirement, setRequirement] = useState<string>('The system shall allow a user to log in with a valid username and password.');
+  const [requirement, setRequirement] = useState<string>('For the attached document, generate test cases for the user login requirements listed in section 2.1.');
   const [testCases, setTestCases] = useState<TestCase[] | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [fileData, setFileData] = useState<{ mimeType: string, data: string } | null>(null);
+
+  const handleFileChange = (selectedFile: File | null) => {
+    setFile(selectedFile);
+    if (selectedFile) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = (reader.result as string).split(',')[1];
+        setFileData({
+          mimeType: selectedFile.type,
+          data: base64String,
+        });
+      };
+      reader.onerror = () => {
+        setError("Failed to read the file.");
+        setFile(null);
+        setFileData(null);
+      }
+      reader.readAsDataURL(selectedFile);
+    } else {
+      setFileData(null);
+    }
+  };
+
 
   const handleGenerateTestCase = useCallback(async () => {
-    if (!requirement.trim()) {
-      setError('Requirement text cannot be empty.');
+    if (!requirement.trim() && !file) {
+      setError('A requirement description or an uploaded document is required.');
       return;
     }
     setIsLoading(true);
@@ -22,7 +48,7 @@ const App: React.FC = () => {
     setTestCases(null);
 
     try {
-      const generatedData = await generateTestCaseFromRequirement(requirement);
+      const generatedData = await generateTestCaseFromRequirement(requirement, fileData);
       
       const newTestCases: TestCase[] = generatedData.map((data, index) => ({
         id: `TC-${Date.now()}-${index}`,
@@ -33,6 +59,8 @@ const App: React.FC = () => {
           { step: 1, actor: data.actor, action: data.action },
         ],
         expectedResult: data.expectedOutcome,
+        preConditions: data.preConditions,
+        testData: data.testData,
         jiraStatus: JiraStatus.IDLE,
       }));
       setTestCases(newTestCases);
@@ -43,7 +71,7 @@ const App: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [requirement]);
+  }, [requirement, fileData, file]);
   
   const handleJiraStatusUpdate = (testCaseId: string, status: JiraStatus, result?: { issueKey?: string, error?: string }) => {
     setTestCases(prevTestCases => {
@@ -65,11 +93,14 @@ const App: React.FC = () => {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-sans p-4 sm:p-6 lg:p-8">
       <div className="max-w-4xl mx-auto">
         <header className="text-center mb-8">
-          <h1 className="text-4xl sm:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-sky-500 to-emerald-500">
-            Health-Tech Test Case Generator
-          </h1>
+          <div className="flex justify-center items-center gap-4">
+            <FileIcon className="w-12 h-12 text-sky-500" />
+            <h1 className="text-4xl sm:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-sky-500 to-emerald-500">
+              Health-Tech Test Case Generator
+            </h1>
+          </div>
           <p className="mt-2 text-lg text-slate-600 dark:text-slate-400">
-            Generate a comprehensive suite of test cases from a single software requirement using AI.
+            Upload a requirements document (PDF, Word) or enter text to generate a comprehensive suite of test cases.
           </p>
         </header>
 
@@ -79,6 +110,8 @@ const App: React.FC = () => {
             setRequirement={setRequirement}
             onGenerate={handleGenerateTestCase}
             isLoading={isLoading}
+            file={file}
+            onFileChange={handleFileChange}
           />
 
           {isLoading && <Loader />}

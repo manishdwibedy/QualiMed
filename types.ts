@@ -12,6 +12,8 @@ export interface TestCase {
   category: TestCaseCategory;
   steps: TestStep[];
   expectedResult: string;
+  preConditions?: string;
+  testData?: string;
   jiraStatus: JiraStatus;
   jiraIssueKey?: string | null;
   jiraError?: string | null;
@@ -29,6 +31,8 @@ export interface GeneratedTestCaseData {
   action: string;
   expectedOutcome: string;
   title: string;
+  preConditions?: string;
+  testData?: string;
 }
 
 export enum JiraStatus {
