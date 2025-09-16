@@ -1,0 +1,5 @@
+{
+  "name": "Health-Tech Test Case Generator",
+  "description": "An MVP for a healthcare software requirements-to-test case conversion system using the Gemini API. This tool takes a plain text requirement, extracts key components, and generates a structured test case ready for integration with ALM platforms like Jira.",
+  "requestFramePermissions": []
+}
