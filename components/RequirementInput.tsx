@@ -1,4 +1,3 @@
-
 import React, { useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { FileIcon, UploadCloudIcon, XIcon } from './Icons';
@@ -8,6 +7,7 @@ interface RequirementInputProps {
   setRequirement: (value: string) => void;
   onGenerate: () => void;
   isLoading: boolean;
+  isParsing: boolean;
   file: File | null;
   onFileChange: (file: File | null) => void;
 }
@@ -17,6 +17,7 @@ export const RequirementInput: React.FC<RequirementInputProps> = ({
   setRequirement, 
   onGenerate, 
   isLoading,
+  isParsing,
   file,
   onFileChange 
 }) => {
@@ -27,6 +28,8 @@ export const RequirementInput: React.FC<RequirementInputProps> = ({
     }
   }, [onFileChange]);
 
+  const isDisabled = isLoading || isParsing;
+
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
@@ -34,7 +37,7 @@ export const RequirementInput: React.FC<RequirementInputProps> = ({
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
     },
     multiple: false,
-    disabled: isLoading,
+    disabled: isDisabled,
   });
 
   const handleRemoveFile = (e: React.MouseEvent) => {
@@ -42,7 +45,7 @@ export const RequirementInput: React.FC<RequirementInputProps> = ({
     onFileChange(null);
   };
 
-  const isButtonDisabled = isLoading || (!requirement.trim() && !file);
+  const isButtonDisabled = isDisabled || (!requirement.trim() && !file);
 
   return (
     <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 space-y-4">
@@ -56,7 +59,7 @@ export const RequirementInput: React.FC<RequirementInputProps> = ({
           onChange={(e) => setRequirement(e.target.value)}
           placeholder="e.g., Generate test cases for the login feature described in the attached document."
           className="w-full h-24 p-3 bg-slate-100 dark:bg-slate-700 border-2 border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition duration-200 resize-none"
-          disabled={isLoading}
+          disabled={isDisabled}
           aria-label="Software Requirement Context Input"
         />
       </div>
@@ -69,7 +72,7 @@ export const RequirementInput: React.FC<RequirementInputProps> = ({
           {...getRootProps()} 
           className={`relative p-6 border-2 border-dashed rounded-lg cursor-pointer transition-colors duration-200 
             ${isDragActive ? 'border-sky-500 bg-sky-50 dark:bg-sky-900/50' : 'border-slate-300 dark:border-slate-600 hover:border-sky-400'}
-            ${isLoading ? 'cursor-not-allowed opacity-50' : ''}`}
+            ${isDisabled ? 'cursor-not-allowed opacity-50' : ''}`}
         >
           <input {...getInputProps()} />
           {file ? (
@@ -78,14 +81,25 @@ export const RequirementInput: React.FC<RequirementInputProps> = ({
                 <FileIcon className="w-8 h-8 text-sky-500" />
                 <div>
                   <p className="font-semibold text-slate-800 dark:text-slate-200">{file.name}</p>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
-                    {(file.size / 1024).toFixed(2)} KB
-                  </p>
+                   {isParsing ? (
+                    <div className="flex items-center text-sm text-sky-600 dark:text-sky-400">
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Parsing document...
+                    </div>
+                  ) : (
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                      {(file.size / 1024).toFixed(2)} KB
+                    </p>
+                  )}
                 </div>
               </div>
               <button 
                 onClick={handleRemoveFile} 
-                className="p-1.5 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                disabled={isDisabled}
+                className="p-1.5 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 aria-label="Remove file"
               >
                 <XIcon className="w-5 h-5" />

@@ -1,11 +1,13 @@
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { type TestCase, TestCaseCategory, JiraStatus } from '../types';
 import { JiraIntegration } from './JiraIntegration';
+import { MarkdownRenderer } from './MarkdownRenderer';
+import { PencilIcon } from './Icons';
 
 interface SingleTestCaseCardProps {
   testCase: TestCase;
   onJiraStatusUpdate: (testCaseId: string, status: JiraStatus, result?: { issueKey?: string, error?: string }) => void;
+  onTestCaseUpdate: (testCase: TestCase) => void;
 }
 
 const categoryStyles: { [key in TestCaseCategory]: { bg: string; text: string; border: string } } = {
@@ -33,34 +35,115 @@ const Section: React.FC<{ title: string, children: React.ReactNode, className?: 
   </div>
 );
 
+const EditableField: React.FC<{ label: string; value: string; onChange: (value: string) => void; isTextArea?: boolean }> = ({ label, value, onChange, isTextArea = false }) => {
+    const commonClasses = "w-full p-2 bg-slate-100 dark:bg-slate-700 border-2 border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition duration-200";
+    return (
+        <div>
+            <label className="block text-sm font-semibold mb-1 text-slate-700 dark:text-slate-300">{label}</label>
+            {isTextArea ? (
+                <textarea value={value} onChange={e => onChange(e.target.value)} className={`${commonClasses} min-h-[80px] resize-y`} />
+            ) : (
+                <input type="text" value={value} onChange={e => onChange(e.target.value)} className={commonClasses} />
+            )}
+        </div>
+    );
+};
 
-export const SingleTestCaseCard: React.FC<SingleTestCaseCardProps> = ({ testCase, onJiraStatusUpdate }) => {
+
+export const SingleTestCaseCard: React.FC<SingleTestCaseCardProps> = ({ testCase, onJiraStatusUpdate, onTestCaseUpdate }) => {
   const styles = categoryStyles[testCase.category] || categoryStyles[TestCaseCategory.POSITIVE];
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedTestCase, setEditedTestCase] = useState<TestCase>(testCase);
+
+  useEffect(() => {
+    setEditedTestCase(testCase);
+  }, [testCase]);
 
   const handleUpdate = (status: JiraStatus, result?: { issueKey?: string, error?: string }) => {
     onJiraStatusUpdate(testCase.id, status, result);
   };
 
+  const handleInputChange = (field: keyof Omit<TestCase, 'steps'>, value: string) => {
+    setEditedTestCase(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleStepChange = (field: 'actor' | 'action', value: string) => {
+    setEditedTestCase(prev => ({
+        ...prev,
+        steps: [{ ...prev.steps[0], [field]: value }]
+    }));
+  };
+
+  const handleSave = () => {
+    onTestCaseUpdate(editedTestCase);
+    setIsEditing(false);
+  };
+  
+  const handleCancel = () => {
+    setEditedTestCase(testCase); // Revert changes
+    setIsEditing(false);
+  };
+
+  if (isEditing) {
+    return (
+        <article className={`bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 border-l-4 ${styles.border}`} aria-labelledby={`test-case-title-${testCase.id}`}>
+            <div className="space-y-4">
+                <header>
+                    <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">Editing Test Case</h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">ID: {testCase.id}</p>
+                </header>
+                
+                <div className="space-y-4 border-t border-slate-200 dark:border-slate-700 pt-4">
+                    <EditableField label="Title" value={editedTestCase.title} onChange={value => handleInputChange('title', value)} />
+                    <EditableField label="Pre-Conditions" value={editedTestCase.preConditions || ''} onChange={value => handleInputChange('preConditions', value)} isTextArea />
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <EditableField label="Actor" value={editedTestCase.steps[0].actor} onChange={value => handleStepChange('actor', value)} />
+                        <EditableField label="Action" value={editedTestCase.steps[0].action} onChange={value => handleStepChange('action', value)} isTextArea />
+                    </div>
+
+                    <EditableField label="Test Data" value={editedTestCase.testData || ''} onChange={value => handleInputChange('testData', value)} isTextArea />
+                    <EditableField label="Expected Result" value={editedTestCase.expectedResult} onChange={value => handleInputChange('expectedResult', value)} isTextArea />
+                </div>
+
+                <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-3">
+                    <button onClick={handleCancel} className="px-4 py-2 bg-slate-200 dark:bg-slate-600 text-slate-800 dark:text-slate-200 font-semibold rounded-lg hover:bg-slate-300 dark:hover:bg-slate-500 transition-colors">
+                        Cancel
+                    </button>
+                    <button onClick={handleSave} className="px-4 py-2 bg-sky-600 text-white font-semibold rounded-lg shadow-md hover:bg-sky-700 transition-colors">
+                        Save Changes
+                    </button>
+                </div>
+            </div>
+        </article>
+    );
+  }
+
   return (
     <article className={`bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 border-l-4 ${styles.border} animate-fade-in`} aria-labelledby={`test-case-title-${testCase.id}`}>
       <div className="space-y-6">
         <header className="flex justify-between items-start flex-wrap gap-2">
-          <div>
+          <div className="flex-1">
             <h3 id={`test-case-title-${testCase.id}`} className="text-xl font-bold text-sky-600 dark:text-sky-400">{testCase.title}</h3>
             <p className="text-sm text-slate-500 dark:text-slate-400">ID: {testCase.id}</p>
           </div>
-          <span className={`px-3 py-1 text-sm font-medium rounded-full ${styles.bg} ${styles.text}`}>
-            {testCase.category}
-          </span>
+          <div className="flex items-center gap-4">
+             <span className={`px-3 py-1 text-sm font-medium rounded-full ${styles.bg} ${styles.text}`}>
+                {testCase.category}
+             </span>
+             <button onClick={() => setIsEditing(true)} className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors" aria-label="Edit test case">
+                <PencilIcon className="w-5 h-5 text-slate-500 dark:text-slate-400" />
+             </button>
+          </div>
         </header>
 
         <div className="space-y-4 border-t border-slate-200 dark:border-slate-700 pt-4">
 
           {testCase.preConditions && (
              <Section title="Pre-Conditions">
-              <p className={`text-slate-600 dark:text-slate-300 p-3 rounded-md bg-slate-100 dark:bg-slate-700/50`}>
-                {testCase.preConditions}
-              </p>
+              <div className="p-3 rounded-md bg-slate-100 dark:bg-slate-700/50">
+                <MarkdownRenderer content={testCase.preConditions} />
+              </div>
             </Section>
           )}
 
@@ -78,8 +161,10 @@ export const SingleTestCaseCard: React.FC<SingleTestCaseCardProps> = ({ testCase
                   {testCase.steps.map((step) => (
                     <tr key={step.step} className="border-b border-slate-200 dark:border-slate-700">
                       <td className="p-3 text-center">{step.step}</td>
-                      <td className="p-3">{step.actor}</td>
-                      <td className="p-3">{step.action}</td>
+                      <td className="p-3 text-slate-600 dark:text-slate-300">{step.actor}</td>
+                      <td className="p-3">
+                        <MarkdownRenderer content={step.action} />
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -89,16 +174,14 @@ export const SingleTestCaseCard: React.FC<SingleTestCaseCardProps> = ({ testCase
           
           {testCase.testData && (
              <Section title="Test Data">
-              <pre className={`text-slate-600 dark:text-slate-300 p-3 rounded-md bg-slate-100 dark:bg-slate-700/50 text-sm whitespace-pre-wrap`}>
-                <code>{testCase.testData}</code>
-              </pre>
+              <MarkdownRenderer content={testCase.testData} />
             </Section>
           )}
 
           <Section title="Expected Result">
-            <p className={`text-slate-600 dark:text-slate-300 p-3 rounded-md ${styles.bg}`}>
-              {testCase.expectedResult}
-            </p>
+            <div className={`p-3 rounded-md ${styles.bg}`}>
+               <MarkdownRenderer content={testCase.expectedResult} />
+            </div>
           </Section>
         </div>
 
