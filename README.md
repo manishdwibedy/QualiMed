@@ -1,7 +1,6 @@
+# QualiMed: AI Test Case Generator
 
-# Health-Tech Test Case Generator
-
-This application is a powerful tool designed to accelerate the software quality assurance process in the health-tech industry. It leverages Large Language Models (LLMs) to automatically generate comprehensive test case suites from software requirement documents or plain text descriptions.
+QualiMed is a powerful AI-driven tool designed to accelerate the software quality assurance process by automatically generating comprehensive test cases from software requirements.
 
 ## Key Features
 

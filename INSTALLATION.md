@@ -1,7 +1,6 @@
-
 # Local Installation Guide (macOS)
 
-This guide provides step-by-step instructions to set up and run the Health-Tech Test Case Generator application on your MacBook.
+This guide provides step-by-step instructions to set up and run the QualiMed application on your MacBook.
 
 The guide is divided into two parts:
 - **Part A**: Deploying the application with the default Google Gemini API.
@@ -23,7 +22,7 @@ Follow these steps to get the application running on your machine.
 
 #### **Step 1: Project Setup**
 
-1.  Create a new folder for the project on your machine (e.g., `test-case-generator`).
+1.  Create a new folder for the project on your machine (e.g., `qualimed`).
 2.  Inside this folder, create the complete directory structure and all the files provided by the application (`App.tsx`, `index.html`, `components/RequirementInput.tsx`, etc.).
 3.  Copy and paste the content for each file into its corresponding newly created file.
 
@@ -38,7 +37,7 @@ Because this is a modern web application using ES modules, you need to serve it 
 1.  Open the Terminal application.
 2.  Navigate to your project directory:
     ```bash
-    cd path/to/your/test-case-generator
+    cd path/to/your/qualimed
     ```
 3.  Use `npx` to run a simple, temporary web server:
     ```bash

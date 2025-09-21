@@ -245,11 +245,11 @@ ${tc.expectedResult}
           <div className="flex justify-center items-center gap-4">
             <FolderPlusIcon className="w-12 h-12 text-sky-500" />
             <h1 className="text-4xl sm:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-sky-500 to-emerald-500">
-              Health-Tech Test Case Generator
+              QualiMed
             </h1>
           </div>
           <p className="mt-2 text-lg text-slate-600 dark:text-slate-400">
-            Upload requirement documents (PDF, Word) or enter text to generate a comprehensive suite of test cases.
+            Generate comprehensive test cases from software requirements using AI.
           </p>
         </header>
 
