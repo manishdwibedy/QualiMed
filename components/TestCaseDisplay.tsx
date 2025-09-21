@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { type TestCase, ALMStatus, ALMPlatform } from '../types';
 import { SingleTestCaseCard } from './SingleTestCaseCard';
 import { DocumentArrowDownIcon } from './Icons';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 interface TestCaseDisplayProps {
   testCases: TestCase[];
@@ -22,6 +24,104 @@ export const TestCaseDisplay: React.FC<TestCaseDisplayProps> = ({
     almPlatform,
     onAlmPlatformChange
 }) => {
+  const handleExportPdf = useCallback(() => {
+    if (!testCases || testCases.length === 0) return;
+
+    // Type assertion because jspdf-autotable extends the jsPDF prototype
+    const doc = new jsPDF() as jsPDF & { autoTable: (options: any) => jsPDF };
+
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 15;
+    let cursorY = margin;
+
+    const addWrappedText = (text: string, x: number, y: number, options: any = {}) => {
+        const splitText = doc.splitTextToSize(text, pageWidth - margin * 2);
+        doc.text(splitText, x, y, options);
+        return y + (doc.getTextDimensions(splitText).h);
+    };
+
+    doc.setFontSize(22);
+    doc.text('Test Case Suite', pageWidth / 2, cursorY, { align: 'center' });
+    cursorY += 15;
+
+    testCases.forEach((tc, index) => {
+        if (index > 0) {
+            doc.line(margin, cursorY, pageWidth - margin, cursorY);
+            cursorY += 10;
+        }
+
+        // Estimate if a new page is needed; this is a rough approximation
+        if (cursorY > doc.internal.pageSize.getHeight() - 80) {
+            doc.addPage();
+            cursorY = margin;
+        }
+
+        doc.setFontSize(16);
+        doc.setFont('helvetica', 'bold');
+        cursorY = addWrappedText(`${tc.title} (${tc.id})`, margin, cursorY);
+        cursorY += 2;
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        cursorY = addWrappedText(`Category: ${tc.category}`, margin, cursorY);
+        cursorY = addWrappedText(`Source: ${tc.sourceFile || 'N/A'}`, margin, cursorY);
+        cursorY += 8;
+
+        if (tc.preConditions) {
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Pre-Conditions', margin, cursorY);
+            cursorY += 6;
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            cursorY = addWrappedText(tc.preConditions.replace(/`/g, ''), margin, cursorY); // Basic markdown removal
+            cursorY += 8;
+        }
+
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Test Steps', margin, cursorY);
+        cursorY += 6;
+        
+        doc.autoTable({
+            startY: cursorY,
+            head: [['Step', 'Actor', 'Action']],
+            body: tc.steps.map(step => [step.step, step.actor, step.action.replace(/`/g, '')]),
+            theme: 'striped',
+            headStyles: { fillColor: [3, 105, 161] }, // sky-700
+            margin: { left: margin },
+            didDrawPage: (data) => {
+                cursorY = data.cursor?.y ?? cursorY;
+            }
+        });
+        
+        cursorY = (doc as any).autoTable.previous.finalY + 10;
+
+        if (tc.testData) {
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Test Data', margin, cursorY);
+            cursorY += 6;
+            doc.setFontSize(9);
+            doc.setFont('courier', 'normal');
+            cursorY = addWrappedText(tc.testData.replace(/```json\n?|```/g, ''), margin, cursorY);
+            doc.setFont('helvetica', 'normal');
+            cursorY += 8;
+        }
+        
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Expected Result', margin, cursorY);
+        cursorY += 6;
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        cursorY = addWrappedText(tc.expectedResult.replace(/`/g, ''), margin, cursorY);
+        cursorY += 8;
+    });
+
+    doc.save(`test-cases-${Date.now()}.pdf`);
+  }, [testCases]);
+
   if (testCases.length === 0) {
     return (
       <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 text-center">
@@ -58,6 +158,14 @@ export const TestCaseDisplay: React.FC<TestCaseDisplayProps> = ({
            </div>
            <div className="flex items-center gap-2">
              <button
+              onClick={handleExportPdf}
+              className="flex w-full sm:w-auto items-center justify-center gap-2 px-3 py-2 text-sm font-semibold bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors"
+              aria-label="Export test cases as PDF"
+            >
+              <DocumentArrowDownIcon className="w-5 h-5" />
+              <span>PDF</span>
+            </button>
+            <button
               onClick={onExportMarkdown}
               className="flex w-full sm:w-auto items-center justify-center gap-2 px-3 py-2 text-sm font-semibold bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors"
               aria-label="Export test cases as Markdown"
@@ -81,7 +189,7 @@ export const TestCaseDisplay: React.FC<TestCaseDisplayProps> = ({
         <details key={sourceFile} className="bg-white dark:bg-slate-800/50 rounded-2xl shadow-md" open>
             <summary className="p-4 cursor-pointer font-bold text-lg text-slate-700 dark:text-slate-300 list-none flex justify-between items-center">
                 <span>{sourceFile} <span className="text-sm font-medium text-slate-500">({tcs.length} test cases)</span></span>
-                <svg className="w-5 h-5 transition-transform transform details-arrow" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-5 h-5 transition-transform transform details-arrow" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="http://www.w3.org/2000/svg" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
             </summary>
