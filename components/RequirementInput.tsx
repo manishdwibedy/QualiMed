@@ -1,7 +1,7 @@
 import React, { useCallback, useState, useEffect } from 'react';
 import { useDropzone, FileRejection } from 'react-dropzone';
-import { FileIcon, UploadCloudIcon, XIcon, XCircleIcon, SettingsIcon } from './Icons';
-import { type GenerationConfig } from '../types';
+import { FileIcon, UploadCloudIcon, XIcon, XCircleIcon, SettingsIcon, ServerIcon, KeyIcon } from './Icons';
+import { type GenerationConfig, type ModelConfig, ModelProvider } from '../types';
 
 interface RequirementInputProps {
   requirement: string;
@@ -12,6 +12,8 @@ interface RequirementInputProps {
   onFilesChange: (files: File[]) => void;
   generationConfig: GenerationConfig;
   onGenerationConfigChange: (config: GenerationConfig) => void;
+  modelConfig: ModelConfig;
+  onModelConfigChange: (config: ModelConfig) => void;
 }
 
 const SliderControl: React.FC<{
@@ -49,7 +51,9 @@ export const RequirementInput: React.FC<RequirementInputProps> = ({
   files,
   onFilesChange,
   generationConfig,
-  onGenerationConfigChange
+  onGenerationConfigChange,
+  modelConfig,
+  onModelConfigChange,
 }) => {
   const [rejectedFiles, setRejectedFiles] = useState<FileRejection[]>([]);
 
@@ -89,11 +93,12 @@ export const RequirementInput: React.FC<RequirementInputProps> = ({
     setRejectedFiles([]);
   }
   
-  const handleConfigChange = (field: keyof GenerationConfig, value: string | number) => {
-    onGenerationConfigChange({
-      ...generationConfig,
-      [field]: value,
-    });
+  const handleGenConfigChange = (field: keyof GenerationConfig, value: string | number) => {
+    onGenerationConfigChange({ ...generationConfig, [field]: value });
+  };
+  
+  const handleModelConfigChange = (field: keyof ModelConfig, value: string | ModelProvider) => {
+    onModelConfigChange({ ...modelConfig, [field]: value });
   };
 
   const isButtonDisabled = isDisabled || (!requirement.trim() && files.length === 0);
@@ -198,33 +203,90 @@ export const RequirementInput: React.FC<RequirementInputProps> = ({
                       <textarea
                           id="system-instruction"
                           value={generationConfig.systemInstruction}
-                          onChange={(e) => handleConfigChange('systemInstruction', e.target.value)}
+                          onChange={(e) => handleGenConfigChange('systemInstruction', e.target.value)}
                           placeholder="Provide detailed instructions for the AI, including negative constraints (e.g., 'Do not include performance tests')."
                           className="w-full h-48 p-3 bg-slate-100 dark:bg-slate-700 border-2 border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition duration-200 resize-y font-mono text-sm"
                           disabled={isDisabled}
                           aria-label="System Instruction for AI model"
                       />
                   </div>
+
+                  <div className="space-y-4">
+                     <label className="block text-md font-semibold text-slate-700 dark:text-slate-300">Model Configuration</label>
+                     <div className="flex flex-wrap gap-4">
+                         {Object.values(ModelProvider).map(provider => (
+                            <label key={provider} className="flex items-center gap-2 cursor-pointer">
+                                <input 
+                                    type="radio" 
+                                    name="model-provider" 
+                                    value={provider} 
+                                    checked={modelConfig.provider === provider} 
+                                    onChange={() => handleModelConfigChange('provider', provider)}
+                                    disabled={isDisabled}
+                                    className="h-4 w-4 text-sky-600 border-slate-300 focus:ring-sky-500"
+                                />
+                                <span className="font-medium text-slate-700 dark:text-slate-300">{provider}</span>
+                            </label>
+                         ))}
+                     </div>
+                     {modelConfig.provider === ModelProvider.GEMINI && (
+                        <div className="relative animate-fade-in">
+                           <KeyIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                           <input 
+                               type="password"
+                               placeholder="Enter your Gemini API Key (optional, uses project default)"
+                               value={modelConfig.apiKey}
+                               onChange={(e) => handleModelConfigChange('apiKey', e.target.value)}
+                               disabled={isDisabled}
+                               className="w-full pl-10 p-2 bg-slate-100 dark:bg-slate-700 border-2 border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
+                           />
+                        </div>
+                     )}
+                     {modelConfig.provider === ModelProvider.OLLAMA && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-fade-in">
+                           <div className="relative">
+                              <ServerIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                              <input 
+                                  type="text"
+                                  placeholder="Ollama Server URL"
+                                  value={modelConfig.ollamaUrl}
+                                  onChange={(e) => handleModelConfigChange('ollamaUrl', e.target.value)}
+                                  disabled={isDisabled}
+                                  className="w-full pl-10 p-2 bg-slate-100 dark:bg-slate-700 border-2 border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
+                              />
+                           </div>
+                           <input 
+                              type="text"
+                              placeholder="Model Name (e.g., llama3)"
+                              value={modelConfig.ollamaModel}
+                              onChange={(e) => handleModelConfigChange('ollamaModel', e.target.value)}
+                              disabled={isDisabled}
+                              className="w-full p-2 bg-slate-100 dark:bg-slate-700 border-2 border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
+                           />
+                        </div>
+                     )}
+                  </div>
+                  
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4">
                       <SliderControl
                           label="Temperature"
                           value={generationConfig.temperature}
                           min={0} max={1} step={0.1}
-                          onChange={(v) => handleConfigChange('temperature', v)}
+                          onChange={(v) => handleGenConfigChange('temperature', v)}
                           disabled={isDisabled}
                       />
                       <SliderControl
                           label="Top-K"
                           value={generationConfig.topK}
                           min={1} max={100} step={1}
-                          onChange={(v) => handleConfigChange('topK', v)}
+                          onChange={(v) => handleGenConfigChange('topK', v)}
                           disabled={isDisabled}
                       />
                        <SliderControl
                           label="Top-P"
                           value={generationConfig.topP}
                           min={0} max={1} step={0.05}
-                          onChange={(v) => handleConfigChange('topP', v)}
+                          onChange={(v) => handleGenConfigChange('topP', v)}
                           disabled={isDisabled}
                       />
                   </div>
@@ -241,7 +303,7 @@ export const RequirementInput: React.FC<RequirementInputProps> = ({
         >
           {isLoading ? (
             <>
-              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
@@ -255,6 +317,12 @@ export const RequirementInput: React.FC<RequirementInputProps> = ({
        <style>{`
           details[open] .details-arrow {
               transform: rotate(90deg);
+          }
+          details > summary {
+            list-style: none;
+          }
+          details > summary::-webkit-details-marker {
+            display: none;
           }
       `}</style>
     </div>

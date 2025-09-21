@@ -66,3 +66,15 @@ export interface GenerationConfig {
   topK: number;
   topP: number;
 }
+
+export enum ModelProvider {
+  GEMINI = 'Google Gemini',
+  OLLAMA = 'Ollama (Local)',
+}
+
+export interface ModelConfig {
+  provider: ModelProvider;
+  apiKey: string;
+  ollamaUrl: string;
+  ollamaModel: string;
+}

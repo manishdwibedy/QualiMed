@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { RequirementInput } from './components/RequirementInput';
 import { TestCaseDisplay } from './components/TestCaseDisplay';
 import { Loader } from './components/Loader';
-import { type TestCase, ALMStatus, ALMPlatform, type BatchFileStatus, type GenerationConfig } from './types';
+import { type TestCase, ALMStatus, ALMPlatform, type BatchFileStatus, type GenerationConfig, ModelProvider, type ModelConfig } from './types';
 import { generateTestCaseFromRequirement } from './services/geminiService';
 import { FileIcon, FolderPlusIcon } from './components/Icons';
 import * as pdfjs from 'pdfjs-dist';
@@ -38,6 +38,13 @@ const App: React.FC = () => {
     temperature: 0.4,
     topK: 32,
     topP: 1,
+  });
+
+  const [modelConfig, setModelConfig] = useState<ModelConfig>({
+    provider: ModelProvider.GEMINI,
+    apiKey: '',
+    ollamaUrl: 'http://localhost:11434',
+    ollamaModel: 'llama3',
   });
 
   const parseFile = async (file: File): Promise<string> => {
@@ -82,7 +89,7 @@ const App: React.FC = () => {
       setBatchStatus(prev => prev.map(s => s.name === file.name ? { ...s, status: 'processing' } : s));
       try {
         const documentText = await parseFile(file);
-        const generatedData = await generateTestCaseFromRequirement(requirement, documentText, generationConfig);
+        const generatedData = await generateTestCaseFromRequirement(requirement, documentText, generationConfig, modelConfig);
         
         const newTestCases: TestCase[] = generatedData.map((data) => ({
           id: `TC-${crypto.randomUUID()}`,
@@ -110,7 +117,7 @@ const App: React.FC = () => {
         const name = 'Text Input';
         setBatchStatus(prev => prev.map(s => s.name === name ? { ...s, status: 'processing' } : s));
         try {
-            const generatedData = await generateTestCaseFromRequirement(requirement, null, generationConfig);
+            const generatedData = await generateTestCaseFromRequirement(requirement, null, generationConfig, modelConfig);
             const newTestCases: TestCase[] = generatedData.map((data) => ({
                 id: `TC-${crypto.randomUUID()}`,
                 title: data.title,
@@ -125,8 +132,10 @@ const App: React.FC = () => {
             }));
             allGeneratedTestCases.push(...newTestCases);
             setBatchStatus(prev => prev.map(s => s.name === name ? { ...s, status: 'success', generatedCount: newTestCases.length } : s));
-        } catch (e) {
+        } catch (e)
+         {
             const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
+            // Set error on the main display AND the batch status
             setError(`Failed to generate test cases. ${errorMessage}`);
             setBatchStatus(prev => prev.map(s => s.name === name ? { ...s, status: 'error', message: errorMessage } : s));
         }
@@ -134,7 +143,7 @@ const App: React.FC = () => {
 
     setTestCases(allGeneratedTestCases);
     setIsLoading(false);
-  }, [requirement, files, generationConfig]);
+  }, [requirement, files, generationConfig, modelConfig]);
   
   const handleAlmStatusUpdate = (testCaseId: string, status: ALMStatus, result?: { issueKey?: string, error?: string }) => {
     setTestCases(prevTestCases => {
@@ -254,11 +263,13 @@ ${tc.expectedResult}
             onFilesChange={setFiles}
             generationConfig={generationConfig}
             onGenerationConfigChange={setGenerationConfig}
+            modelConfig={modelConfig}
+            onModelConfigChange={setModelConfig}
           />
           
           {batchStatus.length > 0 && <BatchStatusDisplay status={batchStatus} isProcessing={isLoading} />}
 
-          {error && (
+          {error && !isLoading && (
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative" role="alert">
               <strong className="font-bold">Error: </strong>
               <span className="block sm:inline">{error}</span>
