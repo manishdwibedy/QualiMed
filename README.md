@@ -12,7 +12,7 @@ QualiMed is a powerful AI-driven tool designed to accelerate the software qualit
 - **Advanced Customization**:
     - **System Prompt**: Edit the full system instruction to fine-tune the AI's persona, constraints, and output style.
     - **Model Parameters**: Adjust Temperature, Top-K, and Top-P to control the creativity and determinism of the AI's responses.
-- **ALM Integration (Simulated)**: Simulate creating tickets in popular Application Lifecycle Management (ALM) platforms like Jira, Polarion, and Azure DevOps.
+- **Jira Integration (Simulated)**: Simulate creating test case tickets directly in Jira.
 - **Interactive UI**:
     - **Editable Test Cases**: Review and modify generated test cases directly in the user interface before exporting.
     - **Clear Feedback**: Get immediate visual feedback on file uploads, rejections, and batch processing status.

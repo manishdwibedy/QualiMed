@@ -221,7 +221,11 @@ export const SingleTestCaseCard: React.FC<SingleTestCaseCardProps> = ({ testCase
           </Section>
         </div>
 
-        <AlmIntegration testCase={testCase} platform={almPlatform} onUpdate={handleUpdate} />
+        <AlmIntegration 
+          testCase={testCase} 
+          platform={almPlatform} 
+          onUpdate={handleUpdate} 
+        />
       </div>
     </article>
   );
