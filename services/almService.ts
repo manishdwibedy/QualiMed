@@ -1,20 +1,14 @@
 import { type TestCase, ALMPlatform } from '../types';
+// This service attempts to import credentials from `config.ts`.
+// If this file does not exist, you will see a build error.
+// Please follow the instructions in INSTALLATION.md to create this file.
+import { almConfig } from '../config';
 
 interface AlmResult {
   success: boolean;
   issueKey?: string;
   error?: string;
 }
-
-// --- REAL JIRA INTEGRATION CONFIGURATION (User needs to fill this in) ---
-// IMPORTANT: For a production application, use a secure way to store secrets,
-// like environment variables or a secret management service.
-const JIRA_INSTANCE_URL = 'https://tradebotx.atlassian.net'; // e.g., https://my-company.atlassian.net
-const JIRA_USER_EMAIL = 'manish.dwibedy@gmail.com';
-const JIRA_API_TOKEN = 'ATCTT3xFfGN0TIdwtUcC2Pupsl3dnHxgokNPMAl6uOi82TmIlJzc7zwzMGkX4uYHxgqm5XDly5iku8PWO4PBmNAca4UlSKk-Zm2JDHkbjyUS7WL756k5x0xSTT5TLzn730XodjDKSnFxwt85Dv3TiZg2wNCkqyBXo7cJpLpZA-2izuQkFgr8Lxo=7A2C2AFD'; // Generate this from your Atlassian account settings
-
-// Org ID
-// 92d8914c-cfa0-41f5-bb2d-f7d6c1931c38
 
 /**
  * Constructs a Jira issue description in Atlassian Document Format (ADF).
@@ -58,27 +52,26 @@ function buildJiraDescription(testCase: TestCase) {
 
 /**
  * [REAL IMPLEMENTATION] Creates a real test case issue in Jira.
- * NOTE: This function is currently NOT called by default.
- * To enable it, swap it with `createJiraTicketSimulated` in the `createJiraTicket` function below.
  */
 async function createJiraTicketReal(testCase: TestCase): Promise<AlmResult> {
-    if (!JIRA_INSTANCE_URL.startsWith('https://') || !JIRA_USER_EMAIL.includes('@') || !JIRA_API_TOKEN) {
+    const { jira } = almConfig;
+    if (!jira || jira.instanceUrl.includes('your-instance') || jira.apiToken.includes('YOUR_JIRA_API_TOKEN')) {
         return {
             success: false,
-            error: 'Jira configuration is missing. Please update JIRA_INSTANCE_URL, JIRA_USER_EMAIL, and JIRA_API_TOKEN in almService.ts'
+            error: 'Jira configuration is incomplete. Please copy `config.example.ts` to `config.ts` and fill in your credentials.'
         };
     }
 
-    const endpoint = `${JIRA_INSTANCE_URL}/rest/api/3/issue`;
+    const endpoint = `${jira.instanceUrl}/rest/api/3/issue`;
     const headers = {
-        'Authorization': `Basic ${btoa(`${JIRA_USER_EMAIL}:${JIRA_API_TOKEN}`)}`,
+        'Authorization': `Basic ${btoa(`${jira.userEmail}:${jira.apiToken}`)}`,
         'Accept': 'application/json',
         'Content-Type': 'application/json',
     };
 
     const jiraPayload = {
       fields: {
-        project: { key: 'HTP' }, // IMPORTANT: Change 'HTP' to your actual Jira project key
+        project: { key: jira.projectKey },
         summary: testCase.title,
         description: {
           type: 'doc',
@@ -119,9 +112,10 @@ async function createJiraTicketReal(testCase: TestCase): Promise<AlmResult> {
  * This is the default behavior.
  */
 async function createJiraTicketSimulated(testCase: TestCase): Promise<AlmResult> {
+    const projectKey = almConfig.jira?.projectKey || 'PROJ';
     const jiraPayload = {
       fields: {
-        project: { key: 'HTP' },
+        project: { key: projectKey },
         summary: testCase.title,
         description: {
           type: 'doc',
@@ -136,7 +130,7 @@ async function createJiraTicketSimulated(testCase: TestCase): Promise<AlmResult>
     await new Promise(resolve => setTimeout(resolve, 1500));
 
     if (Math.random() > 0.2) { 
-        const issueKey = `HTP-${Math.floor(Math.random() * 1000) + 1}`;
+        const issueKey = `${projectKey}-${Math.floor(Math.random() * 1000) + 1}`;
         return { success: true, issueKey };
     } else {
         return { success: false, error: 'Failed to connect to Jira API (simulated).' };

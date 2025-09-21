@@ -26,11 +26,38 @@ Follow these steps to get the application running on your machine.
 2.  Inside this folder, create the complete directory structure and all the files provided by the application (`App.tsx`, `index.html`, `components/RequirementInput.tsx`, etc.).
 3.  Copy and paste the content for each file into its corresponding newly created file.
 
-#### **Step 2: Dependencies**
+#### **Step 2: ALM Configuration (Required)**
+
+To integrate with ALM tools like Jira, you need to provide credentials securely. This project uses a configuration file that is ignored by Git to keep your secrets safe.
+
+1.  **Create a `.gitignore` file** in the root of your project folder (e.g., `qualimed/`) if it doesn't already exist. Add the following line to it to ensure your configuration file is never committed:
+    ```
+    config.ts
+    ```
+
+2.  **Copy the configuration template**. In your project's root directory, you will find `config.example.ts`. Make a copy of this file and rename the copy to `config.ts`.
+
+3.  **Add your credentials**. Open the new `config.ts` file and replace the placeholder values with your actual Jira instance URL, email, API token, and project key.
+
+    ```typescript
+    // config.ts
+    export const almConfig = {
+      jira: {
+        instanceUrl: 'https://my-company.atlassian.net',
+        userEmail: 'my-email@company.com',
+        apiToken: 'ATCTT3xFfGN0...',
+        projectKey: 'PROJ'
+      },
+    };
+    ```
+
+    > **Note**: This step is required for the application to run, as the code directly imports from `config.ts`.
+
+#### **Step 3: Dependencies**
 
 This project uses an **import map** in `index.html` to load dependencies directly from a CDN. This means **no `npm install` step is required**. All necessary libraries like React and `@google/genai` are fetched by the browser automatically.
 
-#### **Step 3: Run the Local Server**
+#### **Step 4: Run the Local Server**
 
 Because this is a modern web application using ES modules, you need to serve it from a local web server.
 
@@ -48,7 +75,7 @@ Because this is a modern web application using ES modules, you need to serve it 
 
 The application should now be running! By default, it's configured to use Google Gemini. You will need to provide your API key via the UI to use it.
 
-#### **Step 4: Provide Your Gemini API Key**
+#### **Step 5: Provide Your Gemini API Key**
 
 The most secure way to use your API key for local testing is through the application's UI:
 
