@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { type TestCase, TestCaseCategory, ALMStatus, ALMPlatform } from '../types';
 import { AlmIntegration } from './AlmIntegration';
 import { MarkdownRenderer } from './MarkdownRenderer';
-import { PencilIcon } from './Icons';
+import { JsonRenderer } from './JsonRenderer';
+import { PencilIcon, ClipboardDocumentIcon, CheckIcon } from './Icons';
 
 interface SingleTestCaseCardProps {
   testCase: TestCase;
@@ -29,12 +30,46 @@ const categoryStyles: { [key in TestCaseCategory]: { bg: string; text: string; b
   },
 };
 
-const Section: React.FC<{ title: string, children: React.ReactNode, className?: string }> = ({ title, children, className }) => (
-  <div className={className}>
-    <h4 className="text-md font-semibold mb-2 text-slate-700 dark:text-slate-300">{title}</h4>
-    {children}
-  </div>
-);
+const Section: React.FC<{
+  title: string;
+  children: React.ReactNode;
+  className?: string;
+  copyContent?: string;
+}> = ({ title, children, className, copyContent }) => {
+  const [isCopied, setIsCopied] = useState(false);
+
+  const handleCopy = () => {
+    if (!copyContent) return;
+    navigator.clipboard.writeText(copyContent).then(() => {
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000); // Reset icon after 2 seconds
+    }).catch(err => {
+      console.error('Failed to copy content: ', err);
+    });
+  };
+
+  return (
+    <div className={className}>
+      <div className="flex justify-between items-center mb-2">
+        <h4 className="text-md font-semibold text-slate-700 dark:text-slate-300">{title}</h4>
+        {copyContent && (
+          <button
+            onClick={handleCopy}
+            className="p-1.5 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-slate-500 dark:text-slate-400"
+            aria-label="Copy to clipboard"
+          >
+            {isCopied ? (
+              <CheckIcon className="w-5 h-5 text-emerald-500" />
+            ) : (
+              <ClipboardDocumentIcon className="w-5 h-5" />
+            )}
+          </button>
+        )}
+      </div>
+      {children}
+    </div>
+  );
+};
 
 const EditableField: React.FC<{ label: string; value: string; onChange: (value: string) => void; isTextArea?: boolean }> = ({ label, value, onChange, isTextArea = false }) => {
     const commonClasses = "w-full p-2 bg-slate-100 dark:bg-slate-700 border-2 border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition duration-200";
@@ -42,7 +77,7 @@ const EditableField: React.FC<{ label: string; value: string; onChange: (value: 
         <div>
             <label className="block text-sm font-semibold mb-1 text-slate-700 dark:text-slate-300">{label}</label>
             {isTextArea ? (
-                <textarea value={value} onChange={e => onChange(e.target.value)} className={`${commonClasses} min-h-[80px] resize-y`} />
+                <textarea value={value} onChange={e => onChange(e.target.value)} className={`${commonClasses} min-h-[80px] resize-y font-mono`} />
             ) : (
                 <input type="text" value={value} onChange={e => onChange(e.target.value)} className={commonClasses} />
             )}
@@ -174,8 +209,8 @@ export const SingleTestCaseCard: React.FC<SingleTestCaseCardProps> = ({ testCase
           </Section>
           
           {testCase.testData && (
-             <Section title="Test Data">
-              <MarkdownRenderer content={testCase.testData} />
+             <Section title="Test Data" copyContent={testCase.testData}>
+              <JsonRenderer data={testCase.testData} />
             </Section>
           )}
 
