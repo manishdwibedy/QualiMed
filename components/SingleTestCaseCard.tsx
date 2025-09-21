@@ -182,7 +182,7 @@ export const SingleTestCaseCard: React.FC<SingleTestCaseCardProps> = ({ testCase
         <div className="space-y-4 border-t border-slate-200 dark:border-slate-700 pt-4">
 
           {testCase.preConditions && (
-             <Section title="Pre-Conditions">
+             <Section title="Pre-Conditions" copyContent={testCase.preConditions}>
               <div className="p-3 rounded-md bg-slate-100 dark:bg-slate-700/50">
                 <MarkdownRenderer content={testCase.preConditions} />
               </div>
@@ -220,7 +220,7 @@ export const SingleTestCaseCard: React.FC<SingleTestCaseCardProps> = ({ testCase
             </Section>
           )}
 
-          <Section title="Expected Result">
+          <Section title="Expected Result" copyContent={testCase.expectedResult}>
             <div className={`p-3 rounded-md ${styles.bg}`}>
                <MarkdownRenderer content={testCase.expectedResult} />
             </div>
