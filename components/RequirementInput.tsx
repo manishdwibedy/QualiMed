@@ -56,6 +56,7 @@ export const RequirementInput: React.FC<RequirementInputProps> = ({
   onModelConfigChange,
 }) => {
   const [rejectedFiles, setRejectedFiles] = useState<FileRejection[]>([]);
+  const [newCategory, setNewCategory] = useState('');
 
   useEffect(() => {
     if (rejectedFiles.length > 0) {
@@ -93,12 +94,30 @@ export const RequirementInput: React.FC<RequirementInputProps> = ({
     setRejectedFiles([]);
   }
   
-  const handleGenConfigChange = (field: keyof GenerationConfig, value: string | number) => {
+  const handleGenConfigChange = (field: keyof Omit<GenerationConfig, 'categories'>, value: string | number) => {
     onGenerationConfigChange({ ...generationConfig, [field]: value });
   };
   
   const handleModelConfigChange = (field: keyof ModelConfig, value: string | ModelProvider) => {
     onModelConfigChange({ ...modelConfig, [field]: value });
+  };
+
+  const handleAddCategory = () => {
+    const trimmedCategory = newCategory.trim();
+    if (trimmedCategory && !generationConfig.categories.includes(trimmedCategory)) {
+        onGenerationConfigChange({
+            ...generationConfig,
+            categories: [...generationConfig.categories, trimmedCategory],
+        });
+        setNewCategory('');
+    }
+  };
+
+  const handleRemoveCategory = (categoryToRemove: string) => {
+    onGenerationConfigChange({
+        ...generationConfig,
+        categories: generationConfig.categories.filter(c => c !== categoryToRemove),
+    });
   };
 
   const isButtonDisabled = isDisabled || (!requirement.trim() && files.length === 0);
@@ -210,6 +229,45 @@ export const RequirementInput: React.FC<RequirementInputProps> = ({
                           aria-label="System Instruction for AI model"
                       />
                   </div>
+                  
+                  <div className="space-y-4">
+                        <label className="block text-md font-semibold text-slate-700 dark:text-slate-300">
+                            Test Case Categories
+                        </label>
+                        <div className="flex flex-wrap gap-2 mb-2 p-2 bg-slate-100 dark:bg-slate-900/50 rounded-lg">
+                            {generationConfig.categories.map((cat) => (
+                                <div key={cat} className="flex items-center gap-1 bg-sky-100 dark:bg-sky-800 text-sky-800 dark:text-sky-200 text-sm font-medium px-2 py-1 rounded-full">
+                                    <span>{cat}</span>
+                                    <button
+                                        onClick={() => handleRemoveCategory(cat)}
+                                        disabled={isDisabled}
+                                        className="p-0.5 rounded-full hover:bg-sky-200 dark:hover:bg-sky-700 disabled:opacity-50"
+                                        aria-label={`Remove ${cat} category`}
+                                    >
+                                        <XIcon className="w-3 h-3" />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="flex gap-2">
+                            <input
+                                type="text"
+                                value={newCategory}
+                                onChange={(e) => setNewCategory(e.target.value)}
+                                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddCategory(); } }}
+                                placeholder="Add new category (e.g., Usability)"
+                                disabled={isDisabled}
+                                className="flex-grow p-2 bg-slate-100 dark:bg-slate-700 border-2 border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
+                            />
+                            <button
+                                onClick={handleAddCategory}
+                                disabled={isDisabled || !newCategory.trim()}
+                                className="px-4 py-2 bg-sky-600 text-white font-semibold rounded-lg shadow-sm hover:bg-sky-700 disabled:bg-slate-400 disabled:cursor-not-allowed"
+                            >
+                                Add
+                            </button>
+                        </div>
+                    </div>
 
                   <div className="space-y-4">
                      <label className="block text-md font-semibold text-slate-700 dark:text-slate-300">Model Configuration</label>
@@ -303,7 +361,7 @@ export const RequirementInput: React.FC<RequirementInputProps> = ({
         >
           {isLoading ? (
             <>
-              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>

@@ -1,17 +1,17 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { type GeneratedTestCaseData, TestCaseCategory, type GenerationConfig, type ModelConfig, ModelProvider } from '../types';
+import { type GeneratedTestCaseData, type GenerationConfig, type ModelConfig, ModelProvider } from '../types';
 
 // This service now handles multiple AI providers.
 
-const schema = {
+const buildSchema = (categories: string[]) => ({
   type: Type.ARRAY,
   items: {
     type: Type.OBJECT,
     properties: {
       category: {
         type: Type.STRING,
-        description: `The category of the test case. Must be one of: '${TestCaseCategory.POSITIVE}', '${TestCaseCategory.NEGATIVE}', or '${TestCaseCategory.EDGE_CASE}'.`,
-        enum: [TestCaseCategory.POSITIVE, TestCaseCategory.NEGATIVE, TestCaseCategory.EDGE_CASE],
+        description: `The category of the test case. Must be one of: '${categories.join("', '")}'.`,
+        enum: categories,
       },
       title: {
         type: Type.STRING,
@@ -40,7 +40,7 @@ const schema = {
     },
     required: ["category", "title", "actor", "action", "expectedOutcome"],
   }
-};
+});
 
 async function generateWithGemini(
     userPrompt: string,
@@ -61,7 +61,7 @@ async function generateWithGemini(
       config: {
         systemInstruction: genConfig.systemInstruction,
         responseMimeType: "application/json",
-        responseSchema: schema,
+        responseSchema: buildSchema(genConfig.categories),
         temperature: genConfig.temperature,
         topK: genConfig.topK,
         topP: genConfig.topP,
@@ -84,7 +84,7 @@ async function generateWithOllama(
     const ollamaSchemaDescription = `
 You must respond with only a valid JSON array of objects. Do not output any other text, introductory sentences, or code block fences, just the raw JSON.
 Each object in the array must conform to the following properties:
-- category: (string) Must be one of: '${TestCaseCategory.POSITIVE}', '${TestCaseCategory.NEGATIVE}', or '${TestCaseCategory.EDGE_CASE}'.
+- category: (string) Must be one of: '${genConfig.categories.join("', '")}'.
 - title: (string) A concise, descriptive title for the test case.
 - actor: (string) The user or system performing the action.
 - action: (string) The specific action being performed. Use markdown.

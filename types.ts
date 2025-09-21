@@ -1,8 +1,10 @@
-export enum TestCaseCategory {
+export enum DefaultTestCaseCategory {
   POSITIVE = 'Positive',
   NEGATIVE = 'Negative',
   EDGE_CASE = 'Edge Case',
 }
+
+export type TestCaseCategory = string;
 
 export enum ALMPlatform {
   JIRA = 'Jira',
@@ -65,6 +67,7 @@ export interface GenerationConfig {
   temperature: number;
   topK: number;
   topP: number;
+  categories: string[];
 }
 
 export enum ModelProvider {

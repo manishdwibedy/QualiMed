@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { type TestCase, TestCaseCategory, ALMStatus, ALMPlatform } from '../types';
+import { type TestCase, DefaultTestCaseCategory, ALMStatus, ALMPlatform } from '../types';
 import { AlmIntegration } from './AlmIntegration';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { JsonRenderer } from './JsonRenderer';
@@ -12,22 +12,28 @@ interface SingleTestCaseCardProps {
   almPlatform: ALMPlatform;
 }
 
-const categoryStyles: { [key in TestCaseCategory]: { bg: string; text: string; border: string } } = {
-  [TestCaseCategory.POSITIVE]: {
+const categoryStyles: { [key: string]: { bg: string; text: string; border: string } } = {
+  [DefaultTestCaseCategory.POSITIVE]: {
     bg: 'bg-emerald-100 dark:bg-emerald-900/50',
     text: 'text-emerald-800 dark:text-emerald-300',
     border: 'border-emerald-500',
   },
-  [TestCaseCategory.NEGATIVE]: {
+  [DefaultTestCaseCategory.NEGATIVE]: {
     bg: 'bg-red-100 dark:bg-red-900/50',
     text: 'text-red-800 dark:text-red-300',
     border: 'border-red-500',
   },
-  [TestCaseCategory.EDGE_CASE]: {
+  [DefaultTestCaseCategory.EDGE_CASE]: {
     bg: 'bg-amber-100 dark:bg-amber-900/50',
     text: 'text-amber-800 dark:text-amber-300',
     border: 'border-amber-500',
   },
+};
+
+const genericCategoryStyle = {
+    bg: 'bg-sky-100 dark:bg-sky-900/50',
+    text: 'text-sky-800 dark:text-sky-300',
+    border: 'border-sky-500',
 };
 
 const Section: React.FC<{
@@ -87,7 +93,7 @@ const EditableField: React.FC<{ label: string; value: string; onChange: (value: 
 
 
 export const SingleTestCaseCard: React.FC<SingleTestCaseCardProps> = ({ testCase, onAlmStatusUpdate, onTestCaseUpdate, almPlatform }) => {
-  const styles = categoryStyles[testCase.category] || categoryStyles[TestCaseCategory.POSITIVE];
+  const styles = categoryStyles[testCase.category] || genericCategoryStyle;
   const [isEditing, setIsEditing] = useState(false);
   const [editedTestCase, setEditedTestCase] = useState<TestCase>(testCase);
 

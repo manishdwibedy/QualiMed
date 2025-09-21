@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { RequirementInput } from './components/RequirementInput';
 import { TestCaseDisplay } from './components/TestCaseDisplay';
 import { Loader } from './components/Loader';
-import { type TestCase, ALMStatus, ALMPlatform, type BatchFileStatus, type GenerationConfig, ModelProvider, type ModelConfig } from './types';
+import { type TestCase, ALMStatus, ALMPlatform, type BatchFileStatus, type GenerationConfig, ModelProvider, type ModelConfig, DefaultTestCaseCategory } from './types';
 import { generateTestCaseFromRequirement } from './services/geminiService';
 import { FileIcon, FolderPlusIcon } from './components/Icons';
 import * as pdfjs from 'pdfjs-dist';
@@ -14,7 +14,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@4
 
 const DEFAULT_SYSTEM_INSTRUCTION = `You are an expert Software Quality Assurance Engineer specializing in mission-critical healthcare systems.
 Your task is to analyze the software requirements provided in the user's prompt.
-From the provided materials, identify all individual functional requirements. For each requirement found, generate a comprehensive suite of test cases that includes 'Positive', 'Negative', and 'Edge Case' scenarios.
+From the provided materials, identify all individual functional requirements. For each requirement found, generate a comprehensive suite of test cases that includes scenarios for each of the user-defined categories.
 
 You can add constraints for the model by adding them here. For example: "Do not include performance test cases."
 
@@ -38,6 +38,7 @@ const App: React.FC = () => {
     temperature: 0.4,
     topK: 32,
     topP: 1,
+    categories: Object.values(DefaultTestCaseCategory),
   });
 
   const [modelConfig, setModelConfig] = useState<ModelConfig>({
