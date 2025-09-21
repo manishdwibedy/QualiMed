@@ -1,9 +1,10 @@
-import React, { useCallback } from 'react';
-import { type TestCase, ALMStatus, ALMPlatform } from '../types';
+import React, { useCallback, useState } from 'react';
+import { type TestCase, ALMStatus, ALMPlatform, DefaultTestCaseCategory } from '../types';
 import { SingleTestCaseCard } from './SingleTestCaseCard';
 import { DocumentArrowDownIcon } from './Icons';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import { AlmStatusCell } from './AlmStatusCell';
 
 interface TestCaseDisplayProps {
   testCases: TestCase[];
@@ -15,6 +16,28 @@ interface TestCaseDisplayProps {
   onAlmPlatformChange: (platform: ALMPlatform) => void;
 }
 
+// Copied from SingleTestCaseCard for styling the category badge in the table
+const categoryStyles: { [key: string]: { bg: string; text: string; } } = {
+  [DefaultTestCaseCategory.POSITIVE]: {
+    bg: 'bg-emerald-100 dark:bg-emerald-900/50',
+    text: 'text-emerald-800 dark:text-emerald-300',
+  },
+  [DefaultTestCaseCategory.NEGATIVE]: {
+    bg: 'bg-red-100 dark:bg-red-900/50',
+    text: 'text-red-800 dark:text-red-300',
+  },
+  [DefaultTestCaseCategory.EDGE_CASE]: {
+    bg: 'bg-amber-100 dark:bg-amber-900/50',
+    text: 'text-amber-800 dark:text-amber-300',
+  },
+};
+
+const genericCategoryStyle = {
+    bg: 'bg-sky-100 dark:bg-sky-900/50',
+    text: 'text-sky-800 dark:text-sky-300',
+};
+
+
 export const TestCaseDisplay: React.FC<TestCaseDisplayProps> = ({ 
     testCases, 
     onAlmStatusUpdate, 
@@ -24,6 +47,20 @@ export const TestCaseDisplay: React.FC<TestCaseDisplayProps> = ({
     almPlatform,
     onAlmPlatformChange
 }) => {
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+
+  const toggleRow = (id: string) => {
+    setExpandedRows(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
+
   const handleExportPdf = useCallback(() => {
     if (!testCases || testCases.length === 0) return;
 
@@ -193,16 +230,62 @@ export const TestCaseDisplay: React.FC<TestCaseDisplayProps> = ({
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
             </summary>
-            <div className="p-4 border-t border-slate-200 dark:border-slate-700 space-y-4">
-                {tcs.map((testCase) => (
-                    <SingleTestCaseCard 
-                        key={testCase.id} 
-                        testCase={testCase}
-                        onAlmStatusUpdate={onAlmStatusUpdate}
-                        onTestCaseUpdate={onTestCaseUpdate}
-                        almPlatform={almPlatform}
-                    />
-                ))}
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-50 dark:bg-slate-800 text-left text-slate-600 dark:text-slate-400">
+                  <tr>
+                    <th className="p-3 w-12"></th>
+                    <th className="p-3 font-semibold">Test Case</th>
+                    <th className="p-3 font-semibold">Category</th>
+                    <th className="p-3 font-semibold">ALM Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {tcs.map((testCase) => {
+                    const isExpanded = expandedRows.has(testCase.id);
+                    const styles = categoryStyles[testCase.category] || genericCategoryStyle;
+                    return (
+                      <React.Fragment key={testCase.id}>
+                        <tr className="border-t border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-900/20">
+                          <td className="p-3 text-center">
+                            <button onClick={() => toggleRow(testCase.id)} className="p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700" aria-expanded={isExpanded} aria-controls={`details-${testCase.id}`}>
+                              <svg className={`w-5 h-5 transition-transform text-slate-500 ${isExpanded ? 'transform rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                              </svg>
+                            </button>
+                          </td>
+                          <td className="p-3">
+                            <p className="font-semibold text-slate-800 dark:text-slate-200">{testCase.title}</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 font-mono">{testCase.id}</p>
+                          </td>
+                          <td className="p-3">
+                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${styles.bg} ${styles.text}`}>
+                              {testCase.category}
+                            </span>
+                          </td>
+                          <td className="p-3">
+                            <AlmStatusCell testCase={testCase} platform={almPlatform} onStatusUpdate={onAlmStatusUpdate} />
+                          </td>
+                        </tr>
+                        {isExpanded && (
+                          <tr id={`details-${testCase.id}`} className="border-t border-slate-200 dark:border-slate-700">
+                            <td colSpan={4} className="p-0 bg-slate-50 dark:bg-slate-900/30">
+                              <div className="p-4">
+                                <SingleTestCaseCard 
+                                  testCase={testCase}
+                                  onAlmStatusUpdate={onAlmStatusUpdate}
+                                  onTestCaseUpdate={onTestCaseUpdate}
+                                  almPlatform={almPlatform}
+                                />
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
              <style>{`
                 details[open] .details-arrow {
