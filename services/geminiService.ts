@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { type GeneratedTestCaseData, TestCaseCategory } from '../types';
+import { type GeneratedTestCaseData, TestCaseCategory, type GenerationConfig } from '../types';
 
 if (!process.env.API_KEY) {
     throw new Error("API_KEY environment variable is not set.");
@@ -50,38 +50,34 @@ const schema = {
  * Generates a structured test case suite from a plain text requirement and/or extracted document text.
  * @param requirement - The software requirement in plain text, providing context.
  * @param documentText - An optional string containing the extracted text from a document.
+ * @param genConfig - The generation configuration, including system prompt and LLM parameters.
  * @returns A promise that resolves to an array of generated test cases.
  */
 export async function generateTestCaseFromRequirement(
   requirement: string, 
-  documentText: string | null
+  documentText: string | null,
+  genConfig: GenerationConfig
 ): Promise<GeneratedTestCaseData[]> {
   
-  let fullPrompt = `
-    You are an expert Software Quality Assurance Engineer specializing in mission-critical healthcare systems.
-    Your task is to analyze the following software requirement context and/or the document content provided.
-    From the provided materials, identify all individual functional requirements. For each requirement found, generate a comprehensive suite of test cases that includes 'Positive', 'Negative', and 'Edge Case' scenarios.
-
-    Strictly adhere to the provided JSON schema for your response. The schema details all the required and optional fields for each test case.
-    Populate the 'action', 'expectedOutcome', 'preConditions', and 'testData' fields with markdown-formatted text for enhanced readability, as suggested in the schema descriptions.
-
-    Requirement Context: "${requirement}"
-  `;
+  let userPrompt = `Requirement Context: "${requirement}"`;
 
   if (documentText) {
-    fullPrompt += `\n\n--- DOCUMENT CONTENT ---\n${documentText}\n--- END DOCUMENT CONTENT ---`;
+    userPrompt += `\n\n--- DOCUMENT CONTENT ---\n${documentText}\n--- END DOCUMENT CONTENT ---`;
   }
 
-  const contents = { parts: [{ text: fullPrompt }] };
+  const contents = { parts: [{ text: userPrompt }] };
 
   try {
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
       contents: contents,
       config: {
+        systemInstruction: genConfig.systemInstruction,
         responseMimeType: "application/json",
         responseSchema: schema,
-        temperature: 0.3,
+        temperature: genConfig.temperature,
+        topK: genConfig.topK,
+        topP: genConfig.topP,
       },
     });
     

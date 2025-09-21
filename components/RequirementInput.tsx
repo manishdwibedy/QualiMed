@@ -1,6 +1,7 @@
-import React, { useCallback } from 'react';
-import { useDropzone } from 'react-dropzone';
-import { FileIcon, UploadCloudIcon, XIcon } from './Icons';
+import React, { useCallback, useState, useEffect } from 'react';
+import { useDropzone, FileRejection } from 'react-dropzone';
+import { FileIcon, UploadCloudIcon, XIcon, XCircleIcon, SettingsIcon } from './Icons';
+import { type GenerationConfig } from '../types';
 
 interface RequirementInputProps {
   requirement: string;
@@ -9,7 +10,36 @@ interface RequirementInputProps {
   isLoading: boolean;
   files: File[];
   onFilesChange: (files: File[]) => void;
+  generationConfig: GenerationConfig;
+  onGenerationConfigChange: (config: GenerationConfig) => void;
 }
+
+const SliderControl: React.FC<{
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+  onChange: (value: number) => void;
+  disabled: boolean;
+}> = ({ label, value, min, max, step, onChange, disabled }) => (
+    <div>
+        <label className="flex justify-between items-center text-md font-semibold text-slate-700 dark:text-slate-300">
+            <span>{label}</span>
+            <span className="font-normal text-sm text-slate-500 dark:text-slate-400">{value}</span>
+        </label>
+        <input
+            type="range"
+            min={min}
+            max={max}
+            step={step}
+            value={value}
+            onChange={(e) => onChange(parseFloat(e.target.value))}
+            disabled={disabled}
+            className="w-full h-2 bg-slate-200 dark:bg-slate-600 rounded-lg appearance-none cursor-pointer accent-sky-600 disabled:opacity-50"
+        />
+    </div>
+);
 
 export const RequirementInput: React.FC<RequirementInputProps> = ({ 
   requirement, 
@@ -17,11 +47,25 @@ export const RequirementInput: React.FC<RequirementInputProps> = ({
   onGenerate, 
   isLoading,
   files,
-  onFilesChange 
+  onFilesChange,
+  generationConfig,
+  onGenerationConfigChange
 }) => {
+  const [rejectedFiles, setRejectedFiles] = useState<FileRejection[]>([]);
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    onFilesChange([...files, ...acceptedFiles]);
+  useEffect(() => {
+    if (rejectedFiles.length > 0) {
+      const timer = setTimeout(() => setRejectedFiles([]), 7000);
+      return () => clearTimeout(timer);
+    }
+  }, [rejectedFiles]);
+
+  const onDrop = useCallback((acceptedFiles: File[], fileRejections: FileRejection[]) => {
+    // Add new unique files to the existing list
+    const existingFileNames = new Set(files.map(f => f.name));
+    const newUniqueFiles = acceptedFiles.filter(f => !existingFileNames.has(f.name));
+    onFilesChange([...files, ...newUniqueFiles]);
+    setRejectedFiles(fileRejections);
   }, [onFilesChange, files]);
 
   const isDisabled = isLoading;
@@ -42,7 +86,15 @@ export const RequirementInput: React.FC<RequirementInputProps> = ({
   
   const handleRemoveAll = () => {
     onFilesChange([]);
+    setRejectedFiles([]);
   }
+  
+  const handleConfigChange = (field: keyof GenerationConfig, value: string | number) => {
+    onGenerationConfigChange({
+      ...generationConfig,
+      [field]: value,
+    });
+  };
 
   const isButtonDisabled = isDisabled || (!requirement.trim() && files.length === 0);
   const buttonText = files.length > 0 ? `Start Batch Generation (${files.length} ${files.length === 1 ? 'File' : 'Files'})` : 'Generate Test Suite';
@@ -85,6 +137,25 @@ export const RequirementInput: React.FC<RequirementInputProps> = ({
         </div>
       </div>
       
+      {rejectedFiles.length > 0 && (
+        <div className="space-y-2 animate-fade-in" aria-live="polite">
+            <h4 className="font-semibold text-red-600 dark:text-red-400">Rejected Files</h4>
+            <ul className="space-y-2">
+                {rejectedFiles.map(({ file, errors }) => (
+                    <li key={file.name + file.size} className="flex items-start justify-between bg-red-100 dark:bg-red-900/50 p-3 rounded-md">
+                        <div className="flex items-start space-x-3 overflow-hidden">
+                            <XCircleIcon className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                            <div>
+                                <span className="truncate block font-medium text-red-800 dark:text-red-200" title={file.name}>{file.name}</span>
+                                <p className="text-sm text-red-700 dark:text-red-300">{errors.map(e => e.message).join(', ')}</p>
+                            </div>
+                        </div>
+                    </li>
+                ))}
+            </ul>
+        </div>
+      )}
+
       {files.length > 0 && (
          <div className="space-y-2">
             <div className="flex justify-between items-center">
@@ -111,6 +182,55 @@ export const RequirementInput: React.FC<RequirementInputProps> = ({
             </ul>
         </div>
       )}
+      
+      <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
+          <details>
+              <summary className="list-none flex items-center gap-2 cursor-pointer font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors">
+                  <SettingsIcon className="w-5 h-5" />
+                  Advanced Settings
+                  <span className="details-arrow ml-1 transform transition-transform duration-200">&#9656;</span>
+              </summary>
+              <div className="mt-4 space-y-6 pl-4 border-l-2 border-slate-200 dark:border-slate-700 ml-2 animate-fade-in">
+                  <div>
+                      <label htmlFor="system-instruction" className="block text-md font-semibold mb-2 text-slate-700 dark:text-slate-300">
+                          System Instruction
+                      </label>
+                      <textarea
+                          id="system-instruction"
+                          value={generationConfig.systemInstruction}
+                          onChange={(e) => handleConfigChange('systemInstruction', e.target.value)}
+                          placeholder="Provide detailed instructions for the AI, including negative constraints (e.g., 'Do not include performance tests')."
+                          className="w-full h-48 p-3 bg-slate-100 dark:bg-slate-700 border-2 border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition duration-200 resize-y font-mono text-sm"
+                          disabled={isDisabled}
+                          aria-label="System Instruction for AI model"
+                      />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4">
+                      <SliderControl
+                          label="Temperature"
+                          value={generationConfig.temperature}
+                          min={0} max={1} step={0.1}
+                          onChange={(v) => handleConfigChange('temperature', v)}
+                          disabled={isDisabled}
+                      />
+                      <SliderControl
+                          label="Top-K"
+                          value={generationConfig.topK}
+                          min={1} max={100} step={1}
+                          onChange={(v) => handleConfigChange('topK', v)}
+                          disabled={isDisabled}
+                      />
+                       <SliderControl
+                          label="Top-P"
+                          value={generationConfig.topP}
+                          min={0} max={1} step={0.05}
+                          onChange={(v) => handleConfigChange('topP', v)}
+                          disabled={isDisabled}
+                      />
+                  </div>
+              </div>
+          </details>
+      </div>
 
       <div className="mt-4 flex justify-end">
         <button
@@ -132,6 +252,11 @@ export const RequirementInput: React.FC<RequirementInputProps> = ({
           )}
         </button>
       </div>
+       <style>{`
+          details[open] .details-arrow {
+              transform: rotate(90deg);
+          }
+      `}</style>
     </div>
   );
 };

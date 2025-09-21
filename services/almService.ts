@@ -9,10 +9,12 @@ interface AlmResult {
 // --- REAL JIRA INTEGRATION CONFIGURATION (User needs to fill this in) ---
 // IMPORTANT: For a production application, use a secure way to store secrets,
 // like environment variables or a secret management service.
-const JIRA_INSTANCE_URL = 'https://your-domain.atlassian.net'; // e.g., https://my-company.atlassian.net
-const JIRA_USER_EMAIL = 'your-email@example.com';
-const JIRA_API_TOKEN = 'YOUR_JIRA_API_TOKEN'; // Generate this from your Atlassian account settings
+const JIRA_INSTANCE_URL = 'https://tradebotx.atlassian.net'; // e.g., https://my-company.atlassian.net
+const JIRA_USER_EMAIL = 'manish.dwibedy@gmail.com';
+const JIRA_API_TOKEN = 'ATCTT3xFfGN0TIdwtUcC2Pupsl3dnHxgokNPMAl6uOi82TmIlJzc7zwzMGkX4uYHxgqm5XDly5iku8PWO4PBmNAca4UlSKk-Zm2JDHkbjyUS7WL756k5x0xSTT5TLzn730XodjDKSnFxwt85Dv3TiZg2wNCkqyBXo7cJpLpZA-2izuQkFgr8Lxo=7A2C2AFD'; // Generate this from your Atlassian account settings
 
+// Org ID
+// 92d8914c-cfa0-41f5-bb2d-f7d6c1931c38
 
 /**
  * Constructs a Jira issue description in Atlassian Document Format (ADF).

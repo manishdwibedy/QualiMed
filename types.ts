@@ -52,3 +52,17 @@ export interface BatchReport {
   success: { file: string; count: number }[];
   failed: { file: string; reason: string }[];
 }
+
+export interface BatchFileStatus {
+  name: string;
+  status: 'pending' | 'processing' | 'success' | 'error';
+  message?: string;
+  generatedCount?: number;
+}
+
+export interface GenerationConfig {
+  systemInstruction: string;
+  temperature: number;
+  topK: number;
+  topP: number;
+}

@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { RequirementInput } from './components/RequirementInput';
 import { TestCaseDisplay } from './components/TestCaseDisplay';
 import { Loader } from './components/Loader';
-import { type TestCase, ALMStatus, ALMPlatform, type BatchReport } from './types';
+import { type TestCase, ALMStatus, ALMPlatform, type BatchFileStatus, type GenerationConfig } from './types';
 import { generateTestCaseFromRequirement } from './services/geminiService';
 import { FileIcon, FolderPlusIcon } from './components/Icons';
 import * as pdfjs from 'pdfjs-dist';
@@ -12,6 +12,16 @@ import { BatchStatusDisplay } from './components/BatchStatusDisplay';
 // Configure the PDF.js worker to enable text extraction.
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@4.5.136/build/pdf.worker.min.mjs`;
 
+const DEFAULT_SYSTEM_INSTRUCTION = `You are an expert Software Quality Assurance Engineer specializing in mission-critical healthcare systems.
+Your task is to analyze the software requirements provided in the user's prompt.
+From the provided materials, identify all individual functional requirements. For each requirement found, generate a comprehensive suite of test cases that includes 'Positive', 'Negative', and 'Edge Case' scenarios.
+
+You can add constraints for the model by adding them here. For example: "Do not include performance test cases."
+
+Strictly adhere to the provided JSON schema for your response. The schema details all the required and optional fields for each test case.
+Populate the 'action', 'expectedOutcome', 'preConditions', and 'testData' fields with markdown-formatted text for enhanced readability, as suggested in the schema descriptions.`;
+
+
 const App: React.FC = () => {
   const [requirement, setRequirement] = useState<string>('The system shall allow a user to log in with a valid username and password. Upon successful authentication, the user should be redirected to their dashboard.');
   const [testCases, setTestCases] = useState<TestCase[] | null>(null);
@@ -20,11 +30,15 @@ const App: React.FC = () => {
   const [files, setFiles] = useState<File[]>([]);
   const [almPlatform, setAlmPlatform] = useState<ALMPlatform>(ALMPlatform.JIRA);
   
-  // State for batch processing
-  const [batchTotal, setBatchTotal] = useState(0);
-  const [batchProgress, setBatchProgress] = useState(0);
-  const [currentFile, setCurrentFile] = useState<string | null>(null);
-  const [batchReport, setBatchReport] = useState<BatchReport | null>(null);
+  // State for batch processing, tracking each file's status
+  const [batchStatus, setBatchStatus] = useState<BatchFileStatus[]>([]);
+
+  const [generationConfig, setGenerationConfig] = useState<GenerationConfig>({
+    systemInstruction: DEFAULT_SYSTEM_INSTRUCTION,
+    temperature: 0.4,
+    topK: 32,
+    topP: 1,
+  });
 
   const parseFile = async (file: File): Promise<string> => {
     let text = '';
@@ -55,19 +69,20 @@ const App: React.FC = () => {
     setIsLoading(true);
     setError(null);
     setTestCases(null);
-    setBatchReport(null);
-    setBatchTotal(files.length);
-    setBatchProgress(0);
+
+    const initialStatus: BatchFileStatus[] = files.map(f => ({ name: f.name, status: 'pending' }));
+    if (files.length === 0 && requirement.trim()) {
+        initialStatus.push({ name: 'Text Input', status: 'pending' });
+    }
+    setBatchStatus(initialStatus);
 
     const allGeneratedTestCases: TestCase[] = [];
-    const report: BatchReport = { success: [], failed: [] };
 
     for (const file of files) {
-      setCurrentFile(file.name);
-      setBatchProgress(prev => prev + 1);
+      setBatchStatus(prev => prev.map(s => s.name === file.name ? { ...s, status: 'processing' } : s));
       try {
         const documentText = await parseFile(file);
-        const generatedData = await generateTestCaseFromRequirement(requirement, documentText);
+        const generatedData = await generateTestCaseFromRequirement(requirement, documentText, generationConfig);
         
         const newTestCases: TestCase[] = generatedData.map((data) => ({
           id: `TC-${crypto.randomUUID()}`,
@@ -82,21 +97,20 @@ const App: React.FC = () => {
           sourceFile: file.name,
         }));
         allGeneratedTestCases.push(...newTestCases);
-        report.success.push({ file: file.name, count: newTestCases.length });
+        setBatchStatus(prev => prev.map(s => s.name === file.name ? { ...s, status: 'success', generatedCount: newTestCases.length } : s));
       } catch (e) {
         const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
         console.error(`Failed to process ${file.name}:`, e);
-        report.failed.push({ file: file.name, reason: errorMessage });
+        setBatchStatus(prev => prev.map(s => s.name === file.name ? { ...s, status: 'error', message: errorMessage } : s));
       }
     }
     
     // If there's only text and no files, generate from that
     if(files.length === 0 && requirement.trim()) {
-        setCurrentFile('Text Input');
-        setBatchTotal(1);
-        setBatchProgress(1);
+        const name = 'Text Input';
+        setBatchStatus(prev => prev.map(s => s.name === name ? { ...s, status: 'processing' } : s));
         try {
-            const generatedData = await generateTestCaseFromRequirement(requirement, null);
+            const generatedData = await generateTestCaseFromRequirement(requirement, null, generationConfig);
             const newTestCases: TestCase[] = generatedData.map((data) => ({
                 id: `TC-${crypto.randomUUID()}`,
                 title: data.title,
@@ -110,19 +124,17 @@ const App: React.FC = () => {
                 sourceFile: 'Text Input',
             }));
             allGeneratedTestCases.push(...newTestCases);
-            report.success.push({ file: 'Text Input', count: newTestCases.length });
+            setBatchStatus(prev => prev.map(s => s.name === name ? { ...s, status: 'success', generatedCount: newTestCases.length } : s));
         } catch (e) {
             const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
             setError(`Failed to generate test cases. ${errorMessage}`);
-            report.failed.push({ file: 'Text Input', reason: errorMessage });
+            setBatchStatus(prev => prev.map(s => s.name === name ? { ...s, status: 'error', message: errorMessage } : s));
         }
     }
 
     setTestCases(allGeneratedTestCases);
-    setBatchReport(report);
     setIsLoading(false);
-    setCurrentFile(null);
-  }, [requirement, files]);
+  }, [requirement, files, generationConfig]);
   
   const handleAlmStatusUpdate = (testCaseId: string, status: ALMStatus, result?: { issueKey?: string, error?: string }) => {
     setTestCases(prevTestCases => {
@@ -240,9 +252,11 @@ ${tc.expectedResult}
             isLoading={isLoading}
             files={files}
             onFilesChange={setFiles}
+            generationConfig={generationConfig}
+            onGenerationConfigChange={setGenerationConfig}
           />
-
-          {isLoading && <BatchStatusDisplay progress={batchProgress} total={batchTotal} currentFile={currentFile} />}
+          
+          {batchStatus.length > 0 && <BatchStatusDisplay status={batchStatus} isProcessing={isLoading} />}
 
           {error && (
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative" role="alert">
@@ -251,9 +265,6 @@ ${tc.expectedResult}
             </div>
           )}
           
-          {batchReport && !isLoading && <BatchStatusDisplay report={batchReport} />}
-
-
           {testCases && !isLoading && (
             <TestCaseDisplay 
               testCases={testCases} 
