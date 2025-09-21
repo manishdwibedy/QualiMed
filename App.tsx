@@ -48,6 +48,25 @@ const App: React.FC = () => {
     ollamaModel: 'llama3',
   });
 
+  const handleRequirementChange = (newRequirement: string) => {
+    setRequirement(newRequirement);
+    if (testCases || error || batchStatus.length > 0) {
+      setTestCases(null);
+      setError(null);
+      setBatchStatus([]);
+    }
+  };
+
+  const handleFilesChange = (newFiles: File[]) => {
+    setFiles(newFiles);
+    if (testCases || error || batchStatus.length > 0) {
+      setTestCases(null);
+      setError(null);
+      setBatchStatus([]);
+    }
+  };
+
+
   const parseFile = async (file: File): Promise<string> => {
     let text = '';
     const arrayBuffer = await file.arrayBuffer();
@@ -257,11 +276,11 @@ ${tc.expectedResult}
         <main className="space-y-8">
           <RequirementInput
             requirement={requirement}
-            setRequirement={setRequirement}
+            setRequirement={handleRequirementChange}
             onGenerate={handleStartBatchGeneration}
             isLoading={isLoading}
             files={files}
-            onFilesChange={setFiles}
+            onFilesChange={handleFilesChange}
             generationConfig={generationConfig}
             onGenerationConfigChange={setGenerationConfig}
             modelConfig={modelConfig}
