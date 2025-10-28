@@ -7,13 +7,14 @@ interface AlmStatusCellProps {
   testCase: TestCase;
   platform: ALMPlatform;
   onStatusUpdate: (testCaseId: string, status: ALMStatus, result?: { issueKey?: string; error?: string }) => void;
+  jiraConfig?: { instanceUrl: string; userEmail: string; apiToken: string; projectKey: string };
 }
 
-export const AlmStatusCell: React.FC<AlmStatusCellProps> = ({ testCase, platform, onStatusUpdate }) => {
-  
+export const AlmStatusCell: React.FC<AlmStatusCellProps> = ({ testCase, platform, onStatusUpdate, jiraConfig }) => {
+
   const handleCreateTicket = async () => {
     onStatusUpdate(testCase.id, ALMStatus.LOADING);
-    const result = await createAlmTicket(testCase, platform);
+    const result = await createAlmTicket(testCase, platform, jiraConfig);
 
     if (result.success && result.issueKey) {
       onStatusUpdate(testCase.id, ALMStatus.SUCCESS, { issueKey: result.issueKey });

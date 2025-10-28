@@ -14,6 +14,7 @@ interface TestCaseDisplayProps {
   onExportMarkdown: () => void;
   almPlatform: ALMPlatform;
   onAlmPlatformChange: (platform: ALMPlatform) => void;
+  jiraConfig?: { instanceUrl: string; userEmail: string; apiToken: string; projectKey: string };
 }
 
 // Copied from SingleTestCaseCard for styling the category badge in the table
@@ -38,14 +39,15 @@ const genericCategoryStyle = {
 };
 
 
-export const TestCaseDisplay: React.FC<TestCaseDisplayProps> = ({ 
-    testCases, 
-    onAlmStatusUpdate, 
-    onTestCaseUpdate, 
-    onExportJson, 
+export const TestCaseDisplay: React.FC<TestCaseDisplayProps> = ({
+    testCases,
+    onAlmStatusUpdate,
+    onTestCaseUpdate,
+    onExportJson,
     onExportMarkdown,
     almPlatform,
-    onAlmPlatformChange
+    onAlmPlatformChange,
+    jiraConfig
 }) => {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
@@ -264,18 +266,19 @@ export const TestCaseDisplay: React.FC<TestCaseDisplayProps> = ({
                             </span>
                           </td>
                           <td className="p-3">
-                            <AlmStatusCell testCase={testCase} platform={almPlatform} onStatusUpdate={onAlmStatusUpdate} />
+                            <AlmStatusCell testCase={testCase} platform={almPlatform} onStatusUpdate={onAlmStatusUpdate} jiraConfig={jiraConfig} />
                           </td>
                         </tr>
                         {isExpanded && (
                           <tr id={`details-${testCase.id}`} className="border-t border-slate-200 dark:border-slate-700">
                             <td colSpan={4} className="p-0 bg-slate-50 dark:bg-slate-900/30">
                               <div className="p-4">
-                                <SingleTestCaseCard 
+                                <SingleTestCaseCard
                                   testCase={testCase}
                                   onAlmStatusUpdate={onAlmStatusUpdate}
                                   onTestCaseUpdate={onTestCaseUpdate}
                                   almPlatform={almPlatform}
+                                  jiraConfig={jiraConfig}
                                 />
                               </div>
                             </td>

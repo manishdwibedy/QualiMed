@@ -58,6 +58,34 @@ You can provide your API key for local testing is through the application's UI:
 
 The application is now ready to generate test cases using the Gemini API.
 
+#### **Step 5: Configure ALM Integrations (Optional)**
+
+QualiMed supports integration with ALM (Application Lifecycle Management) tools like Jira, Polarion, and Azure DevOps to create test cases directly in these systems.
+
+1.  Copy `config.example.ts` to `config.ts` in the project root.
+2.  Fill in your credentials for the desired ALM platforms:
+
+    **Jira Configuration:**
+    - `instanceUrl`: Your Jira instance URL (e.g., `https://mycompany.atlassian.net`)
+    - `userEmail`: Your Jira account email
+    - `apiToken`: Generate an API token from your Atlassian account settings
+    - `projectKey`: The key of the project where test cases will be created (e.g., `PROJ`)
+
+    **Polarion Configuration:**
+    - `serverUrl`: Your Polarion server URL (e.g., `https://polarion.mycompany.com`)
+    - `username`: Your Polarion username
+    - `password`: Your Polarion password
+    - `projectId`: The ID of the project where work items will be created (e.g., `HealthApp`)
+
+    **Azure DevOps Configuration:**
+    - `organization`: Your Azure DevOps organization name (e.g., `myorg`)
+    - `project`: The name of the project where work items will be created (e.g., `MyProject`)
+    - `personalAccessToken`: Generate a Personal Access Token from Azure DevOps settings
+    - `workItemType`: The type of work item to create (e.g., `Test Case`)
+
+3.  Ensure `config.ts` is added to your `.gitignore` to prevent committing sensitive information.
+4.  In the application UI, when viewing generated test cases, select the desired ALM platform and click "Create Ticket" to integrate with your configured ALM system.
+
 ---
 
 ### Part B: Using Local LLMs with Ollama
@@ -95,3 +123,47 @@ This section explains how to connect the application to a locally running Ollama
 
 - If you get errors, check the logs from the Ollama application (accessible via the macOS menu bar icon) to see if it's receiving requests correctly.
 - Smaller models may require more explicit instructions. If you get malformed responses, try simplifying the prompt in the **"System Instruction"** text area. See the main `README.md` for an example.
+
+---
+
+### Part C: Handling CORS Issues with ALM Integrations
+
+When integrating with external ALM systems like Jira, you may encounter Cross-Origin Resource Sharing (CORS) errors in the browser console. This is a security feature that prevents web applications from making requests to different domains.
+
+#### **CORS Browser Extension (Recommended for Development)**
+
+For development and testing purposes, you can use a browser extension to bypass CORS restrictions:
+
+##### **Chrome/Chromium Browsers:**
+1. Install the "CORS Unblock" extension from the Chrome Web Store: https://chrome.google.com/webstore/detail/cors-unblock/lfhmikememgdcahcdlaciloancbhjino
+2. Click the extension icon in your browser toolbar to enable it (it should turn green)
+3. Refresh the QualiMed application page
+4. The extension will now allow cross-origin requests to Jira and other ALM APIs
+
+##### **Firefox:**
+1. Install the "CORS Everywhere" extension from Firefox Add-ons: https://addons.mozilla.org/en-US/firefox/addon/cors-everywhere/
+2. Click the extension icon to enable it
+3. Refresh the QualiMed application page
+
+##### **Safari:**
+1. Safari doesn't have direct CORS extensions, but you can enable developer mode:
+   - Go to Safari → Preferences → Advanced
+   - Check "Show Develop menu in menu bar"
+   - In the Develop menu, enable "Disable Cross-Origin Restrictions"
+
+#### **Alternative Solutions**
+
+- **Backend Proxy**: For production deployments, implement a backend server that proxies API requests to ALM systems, avoiding CORS entirely.
+- **Simulated Mode**: Use the application's simulated ALM integration for testing UI workflows without real API calls.
+- **Local Development Server**: Run the application with `npm run dev -- --host` to access it from different origins if needed.
+
+#### **Testing CORS Fix**
+
+After installing and enabling the CORS extension:
+1. Open the QualiMed application
+2. Select "Jira" as the ALM platform
+3. Fill in your Jira credentials in the configuration form
+4. Generate test cases and try creating a Jira ticket
+5. Check the browser console - CORS errors should no longer appear
+
+**Note**: CORS extensions should only be used for development. Remove or disable them when browsing other websites for security reasons.

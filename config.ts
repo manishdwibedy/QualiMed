@@ -10,5 +10,16 @@ export const almConfig = {
     apiToken: 'YOUR_JIRA_API_TOKEN_HERE', // Generate this from your Atlassian account settings
     projectKey: 'YOUR_PROJECT_KEY' // e.g., 'PROJ'
   },
-  // You can add configurations for other ALMs like Polarion or Azure DevOps here
+  polarion: {
+    serverUrl: 'https://your-server.polarion.com', // e.g., https://polarion.mycompany.com
+    username: 'your-username',
+    password: 'YOUR_PASSWORD_HERE', // Use a secure method to store this
+    projectId: 'YOUR_PROJECT_ID' // e.g., 'HealthApp'
+  },
+  azureDevOps: {
+    organization: 'your-organization', // e.g., 'myorg'
+    project: 'your-project', // e.g., 'MyProject'
+    personalAccessToken: 'YOUR_PAT_HERE', // Generate this from Azure DevOps settings
+    workItemType: 'Test Case' // e.g., 'Test Case'
+  }
 };

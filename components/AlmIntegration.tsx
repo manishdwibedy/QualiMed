@@ -7,13 +7,14 @@ interface AlmIntegrationProps {
   testCase: TestCase;
   platform: ALMPlatform;
   onUpdate: (status: ALMStatus, result?: { issueKey?: string; error?: string }) => void;
+  jiraConfig?: { instanceUrl: string; userEmail: string; apiToken: string; projectKey: string };
 }
 
-export const AlmIntegration: React.FC<AlmIntegrationProps> = ({ testCase, platform, onUpdate }) => {
-  
+export const AlmIntegration: React.FC<AlmIntegrationProps> = ({ testCase, platform, onUpdate, jiraConfig }) => {
+
   const handleCreateTicket = async () => {
     onUpdate(ALMStatus.LOADING);
-    const result = await createAlmTicket(testCase, platform);
+    const result = await createAlmTicket(testCase, platform, jiraConfig);
 
     if (result.success && result.issueKey) {
       onUpdate(ALMStatus.SUCCESS, { issueKey: result.issueKey });

@@ -3,6 +3,64 @@ import { type GeneratedTestCaseData, type GenerationConfig, type ModelConfig, Mo
 
 // This service now handles multiple AI providers.
 
+// --- TESTING FLAG ---
+// Set this to true to use mock data instead of real API calls
+const USE_MOCK_DATA = true;
+
+/**
+ * Generates mock test cases for testing purposes without making real API calls.
+ * @param requirement - The software requirement in plain text.
+ * @param documentText - An optional string containing the extracted text from a document.
+ * @param genConfig - The generation configuration.
+ * @returns A promise that resolves to an array of mock generated test cases.
+ */
+async function generateMockTestCases(
+  requirement: string,
+  documentText: string | null,
+  genConfig: GenerationConfig,
+): Promise<GeneratedTestCaseData[]> {
+  console.log('[MOCK] Generating test cases for requirement:', requirement);
+  console.log('[MOCK] Document text provided:', !!documentText);
+  console.log('[MOCK] Categories:', genConfig.categories);
+
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 1000));
+
+  // Return mock test cases based on the requirement
+  const mockCases: GeneratedTestCaseData[] = [
+    {
+      category: genConfig.categories[0] || 'Positive',
+      title: 'User successfully logs in with valid credentials',
+      actor: 'a user',
+      action: 'enters valid username and password and clicks login button',
+      expectedOutcome: 'user is redirected to the dashboard and sees a welcome message',
+      preConditions: 'user has a valid account with confirmed email',
+      testData: 'Username: testuser@example.com\nPassword: ValidPass123!',
+    },
+    {
+      category: genConfig.categories[1] || 'Negative',
+      title: 'User fails to log in with invalid password',
+      actor: 'a user',
+      action: 'enters valid username but invalid password and clicks login button',
+      expectedOutcome: 'error message is displayed and user remains on login page',
+      preConditions: 'user has a valid account',
+      testData: 'Username: testuser@example.com\nPassword: WrongPass123!',
+    },
+    {
+      category: genConfig.categories[2] || 'Edge Case',
+      title: 'User attempts login with empty fields',
+      actor: 'a user',
+      action: 'leaves username and password fields empty and clicks login button',
+      expectedOutcome: 'validation messages appear for both fields and login is prevented',
+      preConditions: 'user is on the login page',
+      testData: 'Username: (empty)\nPassword: (empty)',
+    },
+  ];
+
+  // Filter based on available categories
+  return mockCases.filter(mockCase => genConfig.categories.includes(mockCase.category));
+}
+
 const buildSchema = (categories: string[]) => ({
   type: Type.ARRAY,
   items: {
@@ -54,7 +112,7 @@ async function generateWithGemini(
     const ai = new GoogleGenAI({ apiKey });
 
     const contents = { parts: [{ text: userPrompt }] };
-    
+
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
       contents: contents,
@@ -67,7 +125,7 @@ async function generateWithGemini(
         topP: genConfig.topP,
       },
     });
-    
+
     const jsonText = response.text.trim();
     return JSON.parse(jsonText);
 }
@@ -111,7 +169,7 @@ Each object in the array must conform to the following properties:
             }
         }),
     });
-    
+
     if (!response.ok) {
         const errorBody = await response.text();
         throw new Error(`Ollama API request failed with status ${response.status}: ${errorBody}`);
@@ -136,12 +194,18 @@ Each object in the array must conform to the following properties:
  * @returns A promise that resolves to an array of generated test cases.
  */
 export async function generateTestCaseFromRequirement(
-  requirement: string, 
+  requirement: string,
   documentText: string | null,
   genConfig: GenerationConfig,
   modelConfig: ModelConfig,
 ): Promise<GeneratedTestCaseData[]> {
-  
+
+  // --- MOCK MODE FOR TESTING ---
+  // Use mock data if testing flag is enabled
+  if (USE_MOCK_DATA) {
+    return generateMockTestCases(requirement, documentText, genConfig);
+  }
+
   let userPrompt = `Requirement Context: "${requirement}"`;
 
   if (documentText) {
