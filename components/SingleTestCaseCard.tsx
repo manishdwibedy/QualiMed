@@ -11,6 +11,7 @@ interface SingleTestCaseCardProps {
   onTestCaseUpdate: (testCase: TestCase) => void;
   almPlatform: ALMPlatform;
   jiraConfig?: { instanceUrl: string; userEmail: string; apiToken: string; projectKey: string };
+  azureDevOpsConfig?: { organization: string; project: string; personalAccessToken: string; workItemType: string };
 }
 
 const categoryStyles: { [key: string]: { bg: string; text: string; border: string } } = {
@@ -93,7 +94,7 @@ const EditableField: React.FC<{ label: string; value: string; onChange: (value: 
 };
 
 
-export const SingleTestCaseCard: React.FC<SingleTestCaseCardProps> = ({ testCase, onAlmStatusUpdate, onTestCaseUpdate, almPlatform, jiraConfig }) => {
+export const SingleTestCaseCard: React.FC<SingleTestCaseCardProps> = ({ testCase, onAlmStatusUpdate, onTestCaseUpdate, almPlatform, jiraConfig, azureDevOpsConfig }) => {
   const styles = categoryStyles[testCase.category] || genericCategoryStyle;
   const [isEditing, setIsEditing] = useState(false);
   const [editedTestCase, setEditedTestCase] = useState<TestCase>(testCase);
@@ -233,6 +234,7 @@ export const SingleTestCaseCard: React.FC<SingleTestCaseCardProps> = ({ testCase
           platform={almPlatform}
           onUpdate={handleUpdate}
           jiraConfig={jiraConfig}
+          azureDevOpsConfig={azureDevOpsConfig}
         />
       </div>
     </article>

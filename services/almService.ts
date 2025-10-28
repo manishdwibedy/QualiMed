@@ -211,12 +211,12 @@ async function createPolarionWorkItem(testCase: TestCase): Promise<AlmResult> {
 /**
  * [REAL IMPLEMENTATION] Creates a real test case work item in Azure DevOps.
  */
-async function createAzureDevOpsWorkItem(testCase: TestCase): Promise<AlmResult> {
-    const { azureDevOps } = almConfig;
+async function createAzureDevOpsWorkItem(testCase: TestCase, azureDevOpsConfig?: { organization: string; project: string; personalAccessToken: string; workItemType: string }): Promise<AlmResult> {
+    const azureDevOps = azureDevOpsConfig || almConfig.azureDevOps;
     if (!azureDevOps || azureDevOps.organization.includes('your-organization') || azureDevOps.project.includes('your-project') || azureDevOps.personalAccessToken.includes('YOUR_PAT')) {
         return {
             success: false,
-            error: 'Azure DevOps configuration is incomplete. Please fill in your credentials in config.ts.'
+            error: 'Azure DevOps configuration is incomplete. Please fill in your Azure DevOps credentials in the dashboard.'
         };
     }
 
@@ -274,9 +274,10 @@ async function createAzureDevOpsWorkItem(testCase: TestCase): Promise<AlmResult>
  * @param testCase The test case data.
  * @param platform The target ALM platform.
  * @param jiraConfig Optional Jira configuration for dynamic credentials.
+ * @param azureDevOpsConfig Optional Azure DevOps configuration for dynamic credentials.
  * @returns A promise that resolves with the result of the operation.
  */
-export async function createAlmTicket(testCase: TestCase, platform: ALMPlatform, jiraConfig?: { instanceUrl: string; userEmail: string; apiToken: string; projectKey: string }): Promise<AlmResult> {
+export async function createAlmTicket(testCase: TestCase, platform: ALMPlatform, jiraConfig?: { instanceUrl: string; userEmail: string; apiToken: string; projectKey: string }, azureDevOpsConfig?: { organization: string; project: string; personalAccessToken: string; workItemType: string }): Promise<AlmResult> {
   console.log(`Attempting ticket creation for ${platform}...`);
 
   switch (platform) {
@@ -285,7 +286,7 @@ export async function createAlmTicket(testCase: TestCase, platform: ALMPlatform,
     case ALMPlatform.POLARION:
         return createPolarionWorkItem(testCase);
     case ALMPlatform.AZURE_DEVOPS:
-        return createAzureDevOpsWorkItem(testCase);
+        return createAzureDevOpsWorkItem(testCase, azureDevOpsConfig);
     default:
       console.error(`Unknown ALM platform: ${platform}`);
       return { success: false, error: `ALM platform "${platform}" is not supported.` };

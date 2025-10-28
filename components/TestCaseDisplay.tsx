@@ -15,6 +15,7 @@ interface TestCaseDisplayProps {
   almPlatform: ALMPlatform;
   onAlmPlatformChange: (platform: ALMPlatform) => void;
   jiraConfig?: { instanceUrl: string; userEmail: string; apiToken: string; projectKey: string };
+  azureDevOpsConfig?: { organization: string; project: string; personalAccessToken: string; workItemType: string };
 }
 
 // Copied from SingleTestCaseCard for styling the category badge in the table
@@ -47,7 +48,8 @@ export const TestCaseDisplay: React.FC<TestCaseDisplayProps> = ({
     onExportMarkdown,
     almPlatform,
     onAlmPlatformChange,
-    jiraConfig
+    jiraConfig,
+    azureDevOpsConfig
 }) => {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
@@ -266,7 +268,7 @@ export const TestCaseDisplay: React.FC<TestCaseDisplayProps> = ({
                             </span>
                           </td>
                           <td className="p-3">
-                            <AlmStatusCell testCase={testCase} platform={almPlatform} onStatusUpdate={onAlmStatusUpdate} jiraConfig={jiraConfig} />
+                            <AlmStatusCell testCase={testCase} platform={almPlatform} onStatusUpdate={onAlmStatusUpdate} jiraConfig={jiraConfig} azureDevOpsConfig={azureDevOpsConfig} />
                           </td>
                         </tr>
                         {isExpanded && (
@@ -279,6 +281,7 @@ export const TestCaseDisplay: React.FC<TestCaseDisplayProps> = ({
                                   onTestCaseUpdate={onTestCaseUpdate}
                                   almPlatform={almPlatform}
                                   jiraConfig={jiraConfig}
+                                  azureDevOpsConfig={azureDevOpsConfig}
                                 />
                               </div>
                             </td>

@@ -1,22 +1,32 @@
 # QualiMed Enhancement TODO List
 
-## Approved Plan: Implement Real ALM Integrations
+## Approved Plan: Implement Dynamic ALM Credential Input and Mock Gemini
 
-### 1. Update almService.ts for Real Jira
-- [x] Uncomment the real Jira implementation in createJiraTicket function
+### 1. Add Azure DevOps Config Component
+- [x] Create AzureDevOpsConfig.tsx component for dynamic credential input
 
-### 2. Implement Real Polarion Integration
-- [x] Implement real createPolarionWorkItem function using Polarion REST API
+### 2. Update App.tsx for Azure DevOps State
+- [x] Add azureDevOpsConfig state and AzureDevOpsConfig component rendering
 
-### 3. Implement Real Azure DevOps Integration
-- [x] Implement real createAzureDevOpsWorkItem function using Azure DevOps REST API
+### 3. Propagate Azure DevOps Config Through Components
+- [x] Update TestCaseDisplay, AlmStatusCell, AlmIntegration, SingleTestCaseCard interfaces and props
 
-### 4. Update config.ts
-- [x] Add configuration objects for Polarion and Azure DevOps
+### 4. Update almService.ts for Dynamic Azure DevOps Config
+- [x] Modify createAzureDevOpsWorkItem to accept optional azureDevOpsConfig parameter
+- [x] Update createAlmTicket function signature and calls
+
+### 5. Add Mock Gemini Functionality
+- [x] Implement generateMockTestCases function in geminiService.ts
+- [x] Set USE_MOCK_DATA flag to true for testing without API keys
+
+### 6. Update Documentation
+- [x] Update INSTALLATION.md with dashboard configuration instructions
 
 ### Followup Steps
-- [x] Test integrations with real APIs (Jira tested successfully - created issue SCRUM-7)
-- [x] Update INSTALLATION.md with new setup instructions
+- [x] Test Azure DevOps work item creation via dashboard with user-provided credentials
+- [x] Verify mock Gemini functionality generates test cases without real API calls
+- [x] Ensure all TypeScript errors are resolved
+- [x] Perform command-line testing of mock ALM ticket creation (Jira and Azure DevOps)
 
 ## New Approved Plan: Integrate Jira API Calls via Dashboard
 

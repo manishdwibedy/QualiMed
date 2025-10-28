@@ -9,6 +9,7 @@ import * as pdfjs from 'pdfjs-dist';
 import mammoth from 'mammoth';
 import { BatchStatusDisplay } from './components/BatchStatusDisplay';
 import { JiraConfig } from './components/JiraConfig';
+import { AzureDevOpsConfig } from './components/AzureDevOpsConfig';
 
 // Configure the PDF.js worker to enable text extraction.
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@4.5.136/build/pdf.worker.min.mjs`;
@@ -36,6 +37,13 @@ const App: React.FC = () => {
     userEmail: '',
     apiToken: '',
     projectKey: '',
+  });
+
+  const [azureDevOpsConfig, setAzureDevOpsConfig] = useState({
+    organization: '',
+    project: '',
+    personalAccessToken: '',
+    workItemType: 'Test Case',
   });
   
   // State for batch processing, tracking each file's status
@@ -309,6 +317,9 @@ ${tc.expectedResult}
               {almPlatform === ALMPlatform.JIRA && (
                 <JiraConfig config={jiraConfig} onConfigChange={setJiraConfig} />
               )}
+              {almPlatform === ALMPlatform.AZURE_DEVOPS && (
+                <AzureDevOpsConfig config={azureDevOpsConfig} onConfigChange={setAzureDevOpsConfig} />
+              )}
               <TestCaseDisplay
                 testCases={testCases}
                 onAlmStatusUpdate={handleAlmStatusUpdate}
@@ -318,6 +329,7 @@ ${tc.expectedResult}
                 almPlatform={almPlatform}
                 onAlmPlatformChange={setAlmPlatform}
                 jiraConfig={jiraConfig}
+                azureDevOpsConfig={azureDevOpsConfig}
               />
             </>
           )}

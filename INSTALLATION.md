@@ -60,6 +60,16 @@ The application is now ready to generate test cases using the Gemini API.
 
 #### **Step 5: Configure ALM Integrations (Optional)**
 
+QualiMed supports integration with ALM tools like Jira and Azure DevOps. You can configure these directly in the dashboard:
+
+1.  After generating test cases, select your desired ALM platform from the dropdown (Jira, Azure DevOps, etc.).
+2.  Fill in the configuration form that appears with your credentials:
+    - **Jira**: Instance URL, User Email, API Token, Project Key
+    - **Azure DevOps**: Organization, Project, Personal Access Token, Work Item Type
+3.  Click "Create Ticket" on individual test cases to push them to your ALM system.
+
+**Note**: Credentials are stored temporarily in your browser session and not persisted. For production use, consider secure credential management.
+
 QualiMed supports integration with ALM (Application Lifecycle Management) tools like Jira, Polarion, and Azure DevOps to create test cases directly in these systems.
 
 1.  Copy `config.example.ts` to `config.ts` in the project root.
