@@ -1,6 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTheme } from './ThemeProvider';
 import { XIcon } from './Icons';
+import { JiraConfig } from './JiraConfig';
+import { AzureDevOpsConfig } from './AzureDevOpsConfig';
+import { PolarionConfig } from './PolarionConfig';
+import { loadAlmSettings, saveAlmSettings, AlmSettings } from '../services/settingsService';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -10,6 +14,39 @@ interface SettingsModalProps {
 const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
   const { theme, toggleTheme } = useTheme();
   const [activeTab, setActiveTab] = useState<'general' | 'api' | 'alm'>('general');
+  const [almSettings, setAlmSettings] = useState<AlmSettings>({
+    jira: { instanceUrl: '', userEmail: '', apiToken: '', projectKey: '' },
+    azureDevOps: { organization: '', project: '', personalAccessToken: '', workItemType: 'Test Case' },
+    polarion: { serverUrl: '', username: '', password: '', projectId: '' },
+  });
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      loadSettings();
+    }
+  }, [isOpen]);
+
+  const loadSettings = async () => {
+    try {
+      const settings = await loadAlmSettings();
+      setAlmSettings(settings);
+    } catch (error) {
+      console.error('Failed to load ALM settings:', error);
+    }
+  };
+
+  const handleSave = async () => {
+    setIsLoading(true);
+    try {
+      await saveAlmSettings(almSettings);
+      onClose();
+    } catch (error) {
+      console.error('Failed to save ALM settings:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -151,23 +188,19 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                 <h3 className="text-lg font-medium text-slate-800 dark:text-slate-200 mb-4">
                   ALM Integration Settings
                 </h3>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                      Default ALM Platform
-                    </label>
-                    <select className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100">
-                      <option value="jira">Jira</option>
-                      <option value="azure">Azure DevOps</option>
-                      <option value="polarion">Polarion</option>
-                    </select>
-                  </div>
-                  <div className="bg-slate-50 dark:bg-slate-700 p-4 rounded-lg">
-                    <p className="text-sm text-slate-600 dark:text-slate-400">
-                      ALM credentials are configured in the main application interface.
-                      Use the configuration panels that appear after generating test cases.
-                    </p>
-                  </div>
+                <div className="space-y-6">
+                  <JiraConfig
+                    config={almSettings.jira}
+                    onConfigChange={(config) => setAlmSettings(prev => ({ ...prev, jira: config }))}
+                  />
+                  <AzureDevOpsConfig
+                    config={almSettings.azureDevOps}
+                    onConfigChange={(config) => setAlmSettings(prev => ({ ...prev, azureDevOps: config }))}
+                  />
+                  <PolarionConfig
+                    config={almSettings.polarion}
+                    onConfigChange={(config) => setAlmSettings(prev => ({ ...prev, polarion: config }))}
+                  />
                 </div>
               </div>
             </div>
@@ -179,11 +212,16 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
           <button
             onClick={onClose}
             className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
+            disabled={isLoading}
           >
             Cancel
           </button>
-          <button className="px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-lg transition-colors">
-            Save Changes
+          <button
+            onClick={handleSave}
+            className="px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-lg transition-colors disabled:opacity-50"
+            disabled={isLoading}
+          >
+            {isLoading ? 'Saving...' : 'Save Changes'}
           </button>
         </div>
       </div>
