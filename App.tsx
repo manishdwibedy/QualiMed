@@ -11,6 +11,10 @@ import { BatchStatusDisplay } from './components/BatchStatusDisplay';
 import { JiraConfig } from './components/JiraConfig';
 import { AzureDevOpsConfig } from './components/AzureDevOpsConfig';
 import { PolarionConfig } from './components/PolarionConfig';
+import { useAuth } from './components/AuthProvider';
+import Login from './components/Login';
+import Navbar from './components/Navbar';
+import { enableAuth } from './config';
 
 // Configure the PDF.js worker to enable text extraction.
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@4.5.136/build/pdf.worker.min.mjs`;
@@ -25,7 +29,7 @@ Strictly adhere to the provided JSON schema for your response. The schema detail
 Populate the 'action', 'expectedOutcome', 'preConditions', and 'testData' fields with markdown-formatted text for enhanced readability, as suggested in the schema descriptions.`;
 
 
-const App: React.FC = () => {
+const AppContent: React.FC = () => {
   const [requirement, setRequirement] = useState<string>('The system shall allow a user to log in with a valid username and password. Upon successful authentication, the user should be redirected to their dashboard.');
   const [testCases, setTestCases] = useState<TestCase[] | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -283,8 +287,9 @@ ${tc.expectedResult}
   }, [testCases]);
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-sans p-4 sm:p-6 lg:p-8">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-sans">
+      <Navbar />
+      <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
         <header className="text-center mb-8">
           <div className="flex justify-center items-center gap-4">
             <FolderPlusIcon className="w-12 h-12 text-sky-500" />
@@ -353,6 +358,26 @@ ${tc.expectedResult}
       </div>
     </div>
   );
+};
+
+const App: React.FC = () => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    console.log(user);
+    
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
+        <Loader />
+      </div>
+    );
+  }
+
+  if (enableAuth && !user) {
+    return <Login />;
+  }
+
+  return <AppContent />;
 };
 
 export default App;
