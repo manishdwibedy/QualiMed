@@ -10,6 +10,9 @@ interface SingleTestCaseCardProps {
   onAlmStatusUpdate: (testCaseId: string, status: ALMStatus, result?: { issueKey?: string, error?: string }) => void;
   onTestCaseUpdate: (testCase: TestCase) => void;
   almPlatform: ALMPlatform;
+  jiraConfig?: { instanceUrl: string; userEmail: string; apiToken: string; projectKey: string };
+  azureDevOpsConfig?: { organization: string; project: string; personalAccessToken: string; workItemType: string };
+  polarionConfig?: { serverUrl: string; username: string; password: string; projectId: string };
 }
 
 const categoryStyles: { [key: string]: { bg: string; text: string; border: string } } = {
@@ -92,7 +95,7 @@ const EditableField: React.FC<{ label: string; value: string; onChange: (value: 
 };
 
 
-export const SingleTestCaseCard: React.FC<SingleTestCaseCardProps> = ({ testCase, onAlmStatusUpdate, onTestCaseUpdate, almPlatform }) => {
+export const SingleTestCaseCard: React.FC<SingleTestCaseCardProps> = ({ testCase, onAlmStatusUpdate, onTestCaseUpdate, almPlatform, jiraConfig, azureDevOpsConfig, polarionConfig }) => {
   const styles = categoryStyles[testCase.category] || genericCategoryStyle;
   const [isEditing, setIsEditing] = useState(false);
   const [editedTestCase, setEditedTestCase] = useState<TestCase>(testCase);
@@ -227,10 +230,13 @@ export const SingleTestCaseCard: React.FC<SingleTestCaseCardProps> = ({ testCase
           </Section>
         </div>
 
-        <AlmIntegration 
-          testCase={testCase} 
-          platform={almPlatform} 
-          onUpdate={handleUpdate} 
+        <AlmIntegration
+          testCase={testCase}
+          platform={almPlatform}
+          onUpdate={handleUpdate}
+          jiraConfig={jiraConfig}
+          azureDevOpsConfig={azureDevOpsConfig}
+          polarionConfig={polarionConfig}
         />
       </div>
     </article>

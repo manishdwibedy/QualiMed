@@ -7,13 +7,16 @@ interface AlmIntegrationProps {
   testCase: TestCase;
   platform: ALMPlatform;
   onUpdate: (status: ALMStatus, result?: { issueKey?: string; error?: string }) => void;
+  jiraConfig?: { instanceUrl: string; userEmail: string; apiToken: string; projectKey: string };
+  azureDevOpsConfig?: { organization: string; project: string; personalAccessToken: string; workItemType: string };
+  polarionConfig?: { serverUrl: string; username: string; password: string; projectId: string };
 }
 
-export const AlmIntegration: React.FC<AlmIntegrationProps> = ({ testCase, platform, onUpdate }) => {
-  
+export const AlmIntegration: React.FC<AlmIntegrationProps> = ({ testCase, platform, onUpdate, jiraConfig, azureDevOpsConfig, polarionConfig }) => {
+
   const handleCreateTicket = async () => {
     onUpdate(ALMStatus.LOADING);
-    const result = await createAlmTicket(testCase, platform);
+    const result = await createAlmTicket(testCase, platform, jiraConfig, azureDevOpsConfig, polarionConfig);
 
     if (result.success && result.issueKey) {
       onUpdate(ALMStatus.SUCCESS, { issueKey: result.issueKey });

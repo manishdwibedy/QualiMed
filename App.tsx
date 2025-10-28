@@ -8,6 +8,9 @@ import { FileIcon, FolderPlusIcon } from './components/Icons';
 import * as pdfjs from 'pdfjs-dist';
 import mammoth from 'mammoth';
 import { BatchStatusDisplay } from './components/BatchStatusDisplay';
+import { JiraConfig } from './components/JiraConfig';
+import { AzureDevOpsConfig } from './components/AzureDevOpsConfig';
+import { PolarionConfig } from './components/PolarionConfig';
 
 // Configure the PDF.js worker to enable text extraction.
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@4.5.136/build/pdf.worker.min.mjs`;
@@ -29,6 +32,27 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [files, setFiles] = useState<File[]>([]);
   const [almPlatform, setAlmPlatform] = useState<ALMPlatform>(ALMPlatform.JIRA);
+
+  const [jiraConfig, setJiraConfig] = useState({
+    instanceUrl: '',
+    userEmail: '',
+    apiToken: '',
+    projectKey: '',
+  });
+
+  const [azureDevOpsConfig, setAzureDevOpsConfig] = useState({
+    organization: '',
+    project: '',
+    personalAccessToken: '',
+    workItemType: 'Test Case',
+  });
+
+  const [polarionConfig, setPolarionConfig] = useState({
+    serverUrl: '',
+    username: '',
+    password: '',
+    projectId: '',
+  });
   
   // State for batch processing, tracking each file's status
   const [batchStatus, setBatchStatus] = useState<BatchFileStatus[]>([]);
@@ -297,15 +321,29 @@ ${tc.expectedResult}
           )}
           
           {testCases && !isLoading && (
-            <TestCaseDisplay 
-              testCases={testCases} 
-              onAlmStatusUpdate={handleAlmStatusUpdate} 
-              onTestCaseUpdate={handleTestCaseUpdate}
-              onExportJson={handleExportJson}
-              onExportMarkdown={handleExportMarkdown}
-              almPlatform={almPlatform}
-              onAlmPlatformChange={setAlmPlatform}
-            />
+            <>
+              {almPlatform === ALMPlatform.JIRA && (
+                <JiraConfig config={jiraConfig} onConfigChange={setJiraConfig} />
+              )}
+              {almPlatform === ALMPlatform.AZURE_DEVOPS && (
+                <AzureDevOpsConfig config={azureDevOpsConfig} onConfigChange={setAzureDevOpsConfig} />
+              )}
+              {almPlatform === ALMPlatform.POLARION && (
+                <PolarionConfig config={polarionConfig} onConfigChange={setPolarionConfig} />
+              )}
+              <TestCaseDisplay
+                testCases={testCases}
+                onAlmStatusUpdate={handleAlmStatusUpdate}
+                onTestCaseUpdate={handleTestCaseUpdate}
+                onExportJson={handleExportJson}
+                onExportMarkdown={handleExportMarkdown}
+                almPlatform={almPlatform}
+                onAlmPlatformChange={setAlmPlatform}
+                jiraConfig={jiraConfig}
+                azureDevOpsConfig={azureDevOpsConfig}
+                polarionConfig={polarionConfig}
+              />
+            </>
           )}
         </main>
         
