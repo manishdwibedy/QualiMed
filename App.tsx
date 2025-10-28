@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { RequirementInput } from './components/RequirementInput';
 import { TestCaseDisplay } from './components/TestCaseDisplay';
 import { Loader } from './components/Loader';
@@ -8,9 +8,11 @@ import { FileIcon, FolderPlusIcon } from './components/Icons';
 import * as pdfjs from 'pdfjs-dist';
 import mammoth from 'mammoth';
 import { BatchStatusDisplay } from './components/BatchStatusDisplay';
-import { JiraConfig } from './components/JiraConfig';
-import { AzureDevOpsConfig } from './components/AzureDevOpsConfig';
-import { PolarionConfig } from './components/PolarionConfig';
+import { useAuth } from './components/AuthProvider';
+import Login from './components/Login';
+import Navbar from './components/Navbar';
+import { enableAuth } from './config';
+import { loadAlmSettings, AlmSettings } from './services/settingsService';
 
 // Configure the PDF.js worker to enable text extraction.
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@4.5.136/build/pdf.worker.min.mjs`;
@@ -25,7 +27,18 @@ Strictly adhere to the provided JSON schema for your response. The schema detail
 Populate the 'action', 'expectedOutcome', 'preConditions', and 'testData' fields with markdown-formatted text for enhanced readability, as suggested in the schema descriptions.`;
 
 
-const App: React.FC = () => {
+const AppContent: React.FC = () => {
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const settings = await loadAlmSettings();
+        setAlmSettings(settings);
+      } catch (error) {
+        console.error('Failed to load ALM settings:', error);
+      }
+    };
+    loadSettings();
+  }, []);
   const [requirement, setRequirement] = useState<string>('The system shall allow a user to log in with a valid username and password. Upon successful authentication, the user should be redirected to their dashboard.');
   const [testCases, setTestCases] = useState<TestCase[] | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -33,25 +46,10 @@ const App: React.FC = () => {
   const [files, setFiles] = useState<File[]>([]);
   const [almPlatform, setAlmPlatform] = useState<ALMPlatform>(ALMPlatform.JIRA);
 
-  const [jiraConfig, setJiraConfig] = useState({
-    instanceUrl: '',
-    userEmail: '',
-    apiToken: '',
-    projectKey: '',
-  });
-
-  const [azureDevOpsConfig, setAzureDevOpsConfig] = useState({
-    organization: '',
-    project: '',
-    personalAccessToken: '',
-    workItemType: 'Test Case',
-  });
-
-  const [polarionConfig, setPolarionConfig] = useState({
-    serverUrl: '',
-    username: '',
-    password: '',
-    projectId: '',
+  const [almSettings, setAlmSettings] = useState<AlmSettings>({
+    jira: { instanceUrl: '', userEmail: '', apiToken: '', projectKey: '' },
+    azureDevOps: { organization: '', project: '', personalAccessToken: '', workItemType: 'Test Case' },
+    polarion: { serverUrl: '', username: '', password: '', projectId: '' },
   });
   
   // State for batch processing, tracking each file's status
@@ -283,8 +281,9 @@ ${tc.expectedResult}
   }, [testCases]);
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-sans p-4 sm:p-6 lg:p-8">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-sans">
+      <Navbar />
+      <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
         <header className="text-center mb-8">
           <div className="flex justify-center items-center gap-4">
             <FolderPlusIcon className="w-12 h-12 text-sky-500" />
@@ -321,29 +320,18 @@ ${tc.expectedResult}
           )}
           
           {testCases && !isLoading && (
-            <>
-              {almPlatform === ALMPlatform.JIRA && (
-                <JiraConfig config={jiraConfig} onConfigChange={setJiraConfig} />
-              )}
-              {almPlatform === ALMPlatform.AZURE_DEVOPS && (
-                <AzureDevOpsConfig config={azureDevOpsConfig} onConfigChange={setAzureDevOpsConfig} />
-              )}
-              {almPlatform === ALMPlatform.POLARION && (
-                <PolarionConfig config={polarionConfig} onConfigChange={setPolarionConfig} />
-              )}
-              <TestCaseDisplay
-                testCases={testCases}
-                onAlmStatusUpdate={handleAlmStatusUpdate}
-                onTestCaseUpdate={handleTestCaseUpdate}
-                onExportJson={handleExportJson}
-                onExportMarkdown={handleExportMarkdown}
-                almPlatform={almPlatform}
-                onAlmPlatformChange={setAlmPlatform}
-                jiraConfig={jiraConfig}
-                azureDevOpsConfig={azureDevOpsConfig}
-                polarionConfig={polarionConfig}
-              />
-            </>
+            <TestCaseDisplay
+              testCases={testCases}
+              onAlmStatusUpdate={handleAlmStatusUpdate}
+              onTestCaseUpdate={handleTestCaseUpdate}
+              onExportJson={handleExportJson}
+              onExportMarkdown={handleExportMarkdown}
+              almPlatform={almPlatform}
+              onAlmPlatformChange={setAlmPlatform}
+              jiraConfig={almSettings.jira}
+              azureDevOpsConfig={almSettings.azureDevOps}
+              polarionConfig={almSettings.polarion}
+            />
           )}
         </main>
         
@@ -353,6 +341,26 @@ ${tc.expectedResult}
       </div>
     </div>
   );
+};
+
+const App: React.FC = () => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    console.log(user);
+    
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
+        <Loader />
+      </div>
+    );
+  }
+
+  if (enableAuth && !user) {
+    return <Login />;
+  }
+
+  return <AppContent />;
 };
 
 export default App;

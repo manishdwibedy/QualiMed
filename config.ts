@@ -3,6 +3,20 @@
 // 2. To enable real ALM integration, fill in your credentials below.
 // 3. IMPORTANT: Add this file (`config.ts`) to your `.gitignore` file to prevent committing secrets.
 
+// Firebase Auth Configuration
+export const firebaseConfig = {
+  apiKey: "AIzaSyD9IJ5WA-ER1dCQJasA6gQFsSTxcLqGfos",
+  authDomain: "simply-trade-4fbbd.firebaseapp.com",
+  projectId: "simply-trade-4fbbd",
+  storageBucket: "simply-trade-4fbbd.appspot.com",
+  messagingSenderId: "142826139203",
+  appId: "1:142826139203:web:a51fb857ff8e097ce12ef6",
+  measurementId: "G-L388M0W5E0"
+};
+
+// Enable or disable authentication (set to false to bypass auth)
+export const enableAuth = true;
+
 export const almConfig = {
   jira: {
     instanceUrl: 'https://your-instance.atlassian.net', // e.g., https://my-company.atlassian.net

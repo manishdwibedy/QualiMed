@@ -19,7 +19,8 @@
     "mammoth": "1.8.0",
     "react-syntax-highlighter": "^15.6.6",
     "jspdf": "^2.5.1",
-    "jspdf-autotable": "^3.8.2"
+    "jspdf-autotable": "^3.8.2",
+    "firebase": "^10.12.2"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
