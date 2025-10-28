@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from './AuthProvider';
-import { FolderPlusIcon } from './Icons';
+import { useTheme } from './ThemeProvider';
+import { FolderPlusIcon, SunIcon, MoonIcon } from './Icons';
 import SettingsModal from './SettingsModal';
 import UserProfileModal from './UserProfileModal';
 
@@ -11,6 +12,7 @@ interface NavbarProps {
 
 const Navbar: React.FC<NavbarProps> = ({ onSettingsClick, onProfileClick }) => {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -45,8 +47,21 @@ const Navbar: React.FC<NavbarProps> = ({ onSettingsClick, onProfileClick }) => {
             </h1>
           </div>
 
-          {/* Right side - Settings and Profile */}
+          {/* Right side - Theme Toggle, Settings and Profile */}
           <div className="flex items-center gap-4">
+            {/* Theme Toggle Button */}
+            <button
+              onClick={toggleTheme}
+              className="p-2 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+              title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+            >
+              {theme === 'light' ? (
+                <MoonIcon className="w-5 h-5" />
+              ) : (
+                <SunIcon className="w-5 h-5" />
+              )}
+            </button>
+
             {/* Settings Button */}
             <button
               onClick={handleSettingsClick}

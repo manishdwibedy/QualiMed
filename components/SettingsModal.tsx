@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTheme } from './ThemeProvider';
 import { XIcon } from './Icons';
 
 interface SettingsModalProps {
@@ -7,6 +8,7 @@ interface SettingsModalProps {
 }
 
 const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
+  const { theme, toggleTheme } = useTheme();
   const [activeTab, setActiveTab] = useState<'general' | 'api' | 'alm'>('general');
 
   if (!isOpen) return null;
@@ -74,11 +76,17 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                       Theme
                     </label>
-                    <select className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100">
-                      <option value="light">Light</option>
-                      <option value="dark">Dark</option>
-                      <option value="system">System</option>
-                    </select>
+                    <div className="flex items-center gap-4">
+                      <button
+                        onClick={() => toggleTheme()}
+                        className="px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-lg transition-colors"
+                      >
+                        Switch to {theme === 'light' ? 'Dark' : 'Light'} Mode
+                      </button>
+                      <span className="text-sm text-slate-600 dark:text-slate-400">
+                        Current: {theme === 'light' ? 'Light' : 'Dark'}
+                      </span>
+                    </div>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
