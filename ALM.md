@@ -325,12 +325,121 @@ echo -n "your-email@example.com:YOUR_API_TOKEN" | base64
 }
 ```
 
+## Polarion Work Item Creation
+
+### Prerequisites
+- Polarion server URL (e.g., `https://your-server.polarion.com`)
+- Username and password with appropriate permissions
+- Project ID (e.g., 'HealthApp')
+- REST API access enabled on your Polarion server
+
+### Test Case Data Structure
+```json
+{
+  "id": "TC-001",
+  "title": "User login with valid credentials",
+  "requirement": "The system shall allow users to log in with valid username and password",
+  "category": "Positive",
+  "steps": [
+    {
+      "step": 1,
+      "actor": "User",
+      "action": "Navigate to login page"
+    },
+    {
+      "step": 2,
+      "actor": "User",
+      "action": "Enter valid username and password"
+    },
+    {
+      "step": 3,
+      "actor": "User",
+      "action": "Click login button"
+    }
+  ],
+  "expectedResult": "User is successfully logged in and redirected to dashboard",
+  "preConditions": "User has a valid account",
+  "testData": "username: testuser@example.com, password: TestPass123"
+}
+```
+
+### Curl Command for Polarion
+
+```bash
+curl -X POST \
+  "https://your-server.polarion.com/polarion/rest/v1/projects/YOUR_PROJECT_ID/workitems" \
+  -H "Authorization: Basic YOUR_BASE64_ENCODED_CREDENTIALS" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "testcase",
+    "title": "User login with valid credentials",
+    "description": "Original Requirement Context: The system shall allow users to log in with valid username and password",
+    "customFields": {
+      "testSteps": "User: Navigate to login page\nUser: Enter valid username and password\nUser: Click login button",
+      "expectedResult": "User is successfully logged in and redirected to dashboard",
+      "preConditions": "User has a valid account",
+      "testData": "username: testuser@example.com, password: TestPass123",
+      "category": "Positive"
+    }
+  }'
+```
+
+### How to Get Polarion Base64 Credentials
+
+```bash
+echo -n "your-username:YOUR_PASSWORD" | base64
+```
+
+### Expected Polarion Response
+
+```json
+{
+  "id": "TC-12345",
+  "type": "testcase",
+  "title": "User login with valid credentials",
+  "status": "open",
+  "project": {
+    "id": "YOUR_PROJECT_ID"
+  }
+}
+```
+
+### Troubleshooting Polarion API Calls
+
+1. **Check REST API Access**: Ensure REST API is enabled in your Polarion server configuration
+2. **Verify Project Permissions**: Make sure your user has write access to the specified project
+3. **Test Basic Work Item Creation**: Start with a minimal payload to isolate issues:
+
+```bash
+curl -X POST \
+  "https://your-server.polarion.com/polarion/rest/v1/projects/YOUR_PROJECT_ID/workitems" \
+  -H "Authorization: Basic YOUR_BASE64_ENCODED_CREDENTIALS" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "testcase",
+    "title": "Test Work Item"
+  }'
+```
+
+4. **Check Custom Fields**: Some custom fields may not be available in your project template
+5. **Verify Work Item Types**: Ensure "testcase" is a valid work item type in your project
+6. **Check Server URL**: Make sure you're using the correct Polarion server URL and API version
+
+### Common Polarion Issues
+
+1. **401 Unauthorized**: Check username/password and base64 encoding
+2. **403 Forbidden**: Verify user permissions for the project
+3. **404 Not Found**: Check project ID and server URL
+4. **400 Bad Request**: Verify JSON syntax and required fields
+5. **500 Internal Server Error**: Check server logs for detailed error information
+
 ## Testing Tips
 
 1. **Start with simple payloads** - Test basic work item/issue creation first
 2. **Use API documentation**:
    - Azure DevOps: https://docs.microsoft.com/en-us/rest/api/azure/devops/wit/work-items/create
    - Jira: https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-post
+   - Polarion: Check your server documentation or contact your Polarion administrator
 3. **Check field availability** - Some fields may not be available in your organization/project
 4. **Verify permissions** - Ensure your credentials have write access
 5. **Test in development environment** - Use test projects/boards first

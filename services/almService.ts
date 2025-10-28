@@ -146,21 +146,21 @@ async function createJiraTicketSimulated(testCase: TestCase): Promise<AlmResult>
 async function createJiraTicket(testCase: TestCase, jiraConfig?: { instanceUrl: string; userEmail: string; apiToken: string; projectKey: string }): Promise<AlmResult> {
   // --- TOGGLE BETWEEN REAL AND SIMULATED ---
   // To use the REAL Jira API, comment out the line below:
-  // return createJiraTicketSimulated(testCase);
+  return createJiraTicketSimulated(testCase);
 
   // And uncomment this line:
-  return createJiraTicketReal(testCase, jiraConfig);
+  // return createJiraTicketReal(testCase, jiraConfig);
 }
 
 /**
  * [REAL IMPLEMENTATION] Creates a real test case work item in Polarion.
  */
-async function createPolarionWorkItem(testCase: TestCase): Promise<AlmResult> {
-    const { polarion } = almConfig;
+async function createPolarionWorkItemReal(testCase: TestCase, polarionConfig?: { serverUrl: string; username: string; password: string; projectId: string }): Promise<AlmResult> {
+    const polarion = polarionConfig || almConfig.polarion;
     if (!polarion || polarion.serverUrl.includes('your-server') || polarion.username.includes('your-username') || polarion.password.includes('YOUR_PASSWORD')) {
         return {
             success: false,
-            error: 'Polarion configuration is incomplete. Please fill in your credentials in config.ts.'
+            error: 'Polarion configuration is incomplete. Please fill in your credentials in the dashboard.'
         };
     }
 
@@ -206,6 +206,49 @@ async function createPolarionWorkItem(testCase: TestCase): Promise<AlmResult> {
         console.error('Network or other error during Polarion work item creation:', error);
         return { success: false, error: error instanceof Error ? error.message : 'An unknown network error occurred.' };
     }
+}
+
+/**
+ * [SIMULATED IMPLEMENTATION] Simulates creating a new test case work item in Polarion.
+ * This is the default behavior.
+ */
+async function createPolarionWorkItemSimulated(testCase: TestCase): Promise<AlmResult> {
+    const projectId = almConfig.polarion?.projectId || 'PROJ';
+    const polarionPayload = {
+        type: 'testcase',
+        title: testCase.title,
+        description: testCase.requirement,
+        customFields: {
+            'testSteps': testCase.steps.map(s => `${s.actor}: ${s.action}`).join('\n'),
+            'expectedResult': testCase.expectedResult,
+            'preConditions': testCase.preConditions || '',
+            'testData': testCase.testData || '',
+            'category': testCase.category,
+        },
+    };
+    console.log(`[SIMULATION][${ALMPlatform.POLARION}] Payload:`, JSON.stringify(polarionPayload, null, 2));
+
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    if (Math.random() > 0.2) {
+        const workItemId = `${projectId}-${Math.floor(Math.random() * 1000) + 1}`;
+        return { success: true, issueKey: workItemId };
+    } else {
+        return { success: false, error: 'Failed to connect to Polarion API (simulated).' };
+    }
+}
+
+/**
+ * Creates a new test case work item in Polarion.
+ * Toggles between the real and simulated implementations.
+ */
+async function createPolarionWorkItem(testCase: TestCase, polarionConfig?: { serverUrl: string; username: string; password: string; projectId: string }): Promise<AlmResult> {
+  // --- TOGGLE BETWEEN REAL AND SIMULATED ---
+  // To use the REAL Polarion API, comment out the line below:
+  return createPolarionWorkItemSimulated(testCase);
+
+  // And uncomment this line:
+  // return createPolarionWorkItemReal(testCase, polarionConfig);
 }
 
 /**
@@ -275,16 +318,17 @@ async function createAzureDevOpsWorkItem(testCase: TestCase, azureDevOpsConfig?:
  * @param platform The target ALM platform.
  * @param jiraConfig Optional Jira configuration for dynamic credentials.
  * @param azureDevOpsConfig Optional Azure DevOps configuration for dynamic credentials.
+ * @param polarionConfig Optional Polarion configuration for dynamic credentials.
  * @returns A promise that resolves with the result of the operation.
  */
-export async function createAlmTicket(testCase: TestCase, platform: ALMPlatform, jiraConfig?: { instanceUrl: string; userEmail: string; apiToken: string; projectKey: string }, azureDevOpsConfig?: { organization: string; project: string; personalAccessToken: string; workItemType: string }): Promise<AlmResult> {
+export async function createAlmTicket(testCase: TestCase, platform: ALMPlatform, jiraConfig?: { instanceUrl: string; userEmail: string; apiToken: string; projectKey: string }, azureDevOpsConfig?: { organization: string; project: string; personalAccessToken: string; workItemType: string }, polarionConfig?: { serverUrl: string; username: string; password: string; projectId: string }): Promise<AlmResult> {
   console.log(`Attempting ticket creation for ${platform}...`);
 
   switch (platform) {
     case ALMPlatform.JIRA:
       return createJiraTicket(testCase, jiraConfig);
     case ALMPlatform.POLARION:
-        return createPolarionWorkItem(testCase);
+        return createPolarionWorkItem(testCase, polarionConfig);
     case ALMPlatform.AZURE_DEVOPS:
         return createAzureDevOpsWorkItem(testCase, azureDevOpsConfig);
     default:

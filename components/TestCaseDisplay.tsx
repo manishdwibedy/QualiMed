@@ -16,6 +16,7 @@ interface TestCaseDisplayProps {
   onAlmPlatformChange: (platform: ALMPlatform) => void;
   jiraConfig?: { instanceUrl: string; userEmail: string; apiToken: string; projectKey: string };
   azureDevOpsConfig?: { organization: string; project: string; personalAccessToken: string; workItemType: string };
+  polarionConfig?: { serverUrl: string; username: string; password: string; projectId: string };
 }
 
 // Copied from SingleTestCaseCard for styling the category badge in the table
@@ -49,7 +50,8 @@ export const TestCaseDisplay: React.FC<TestCaseDisplayProps> = ({
     almPlatform,
     onAlmPlatformChange,
     jiraConfig,
-    azureDevOpsConfig
+    azureDevOpsConfig,
+    polarionConfig
 }) => {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
@@ -268,7 +270,7 @@ export const TestCaseDisplay: React.FC<TestCaseDisplayProps> = ({
                             </span>
                           </td>
                           <td className="p-3">
-                            <AlmStatusCell testCase={testCase} platform={almPlatform} onStatusUpdate={onAlmStatusUpdate} jiraConfig={jiraConfig} azureDevOpsConfig={azureDevOpsConfig} />
+                            <AlmStatusCell testCase={testCase} platform={almPlatform} onStatusUpdate={onAlmStatusUpdate} jiraConfig={jiraConfig} azureDevOpsConfig={azureDevOpsConfig} polarionConfig={polarionConfig} />
                           </td>
                         </tr>
                         {isExpanded && (
@@ -282,6 +284,7 @@ export const TestCaseDisplay: React.FC<TestCaseDisplayProps> = ({
                                   almPlatform={almPlatform}
                                   jiraConfig={jiraConfig}
                                   azureDevOpsConfig={azureDevOpsConfig}
+                                  polarionConfig={polarionConfig}
                                 />
                               </div>
                             </td>

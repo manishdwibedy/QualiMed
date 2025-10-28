@@ -10,6 +10,7 @@ import mammoth from 'mammoth';
 import { BatchStatusDisplay } from './components/BatchStatusDisplay';
 import { JiraConfig } from './components/JiraConfig';
 import { AzureDevOpsConfig } from './components/AzureDevOpsConfig';
+import { PolarionConfig } from './components/PolarionConfig';
 
 // Configure the PDF.js worker to enable text extraction.
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@4.5.136/build/pdf.worker.min.mjs`;
@@ -44,6 +45,13 @@ const App: React.FC = () => {
     project: '',
     personalAccessToken: '',
     workItemType: 'Test Case',
+  });
+
+  const [polarionConfig, setPolarionConfig] = useState({
+    serverUrl: '',
+    username: '',
+    password: '',
+    projectId: '',
   });
   
   // State for batch processing, tracking each file's status
@@ -320,6 +328,9 @@ ${tc.expectedResult}
               {almPlatform === ALMPlatform.AZURE_DEVOPS && (
                 <AzureDevOpsConfig config={azureDevOpsConfig} onConfigChange={setAzureDevOpsConfig} />
               )}
+              {almPlatform === ALMPlatform.POLARION && (
+                <PolarionConfig config={polarionConfig} onConfigChange={setPolarionConfig} />
+              )}
               <TestCaseDisplay
                 testCases={testCases}
                 onAlmStatusUpdate={handleAlmStatusUpdate}
@@ -330,6 +341,7 @@ ${tc.expectedResult}
                 onAlmPlatformChange={setAlmPlatform}
                 jiraConfig={jiraConfig}
                 azureDevOpsConfig={azureDevOpsConfig}
+                polarionConfig={polarionConfig}
               />
             </>
           )}

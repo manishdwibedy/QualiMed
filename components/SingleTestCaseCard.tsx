@@ -12,6 +12,7 @@ interface SingleTestCaseCardProps {
   almPlatform: ALMPlatform;
   jiraConfig?: { instanceUrl: string; userEmail: string; apiToken: string; projectKey: string };
   azureDevOpsConfig?: { organization: string; project: string; personalAccessToken: string; workItemType: string };
+  polarionConfig?: { serverUrl: string; username: string; password: string; projectId: string };
 }
 
 const categoryStyles: { [key: string]: { bg: string; text: string; border: string } } = {
@@ -94,7 +95,7 @@ const EditableField: React.FC<{ label: string; value: string; onChange: (value: 
 };
 
 
-export const SingleTestCaseCard: React.FC<SingleTestCaseCardProps> = ({ testCase, onAlmStatusUpdate, onTestCaseUpdate, almPlatform, jiraConfig, azureDevOpsConfig }) => {
+export const SingleTestCaseCard: React.FC<SingleTestCaseCardProps> = ({ testCase, onAlmStatusUpdate, onTestCaseUpdate, almPlatform, jiraConfig, azureDevOpsConfig, polarionConfig }) => {
   const styles = categoryStyles[testCase.category] || genericCategoryStyle;
   const [isEditing, setIsEditing] = useState(false);
   const [editedTestCase, setEditedTestCase] = useState<TestCase>(testCase);
@@ -235,6 +236,7 @@ export const SingleTestCaseCard: React.FC<SingleTestCaseCardProps> = ({ testCase
           onUpdate={handleUpdate}
           jiraConfig={jiraConfig}
           azureDevOpsConfig={azureDevOpsConfig}
+          polarionConfig={polarionConfig}
         />
       </div>
     </article>

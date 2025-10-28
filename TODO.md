@@ -28,19 +28,28 @@
 - [x] Ensure all TypeScript errors are resolved
 - [x] Perform command-line testing of mock ALM ticket creation (Jira and Azure DevOps)
 
-## New Approved Plan: Integrate Jira API Calls via Dashboard
+## New Approved Plan: Complete Polarion Integration with Dynamic Credentials
 
-### 1. Add Jira Config State in App.tsx
-- [x] Add state for Jira configuration (instanceUrl, userEmail, apiToken, projectKey)
+### 1. Create PolarionConfig Component
+- [x] Create components/PolarionConfig.tsx following the pattern of JiraConfig and AzureDevOpsConfig
 
-### 2. Create JiraConfig Component
-- [x] Create components/JiraConfig.tsx with input fields for Jira credentials
+### 2. Add Polarion Config State in App.tsx
+- [x] Add polarionConfig state with fields: serverUrl, username, password, projectId
 
-### 3. Update almService.ts for Dynamic Credentials
-- [x] Modify createJiraTicketReal to accept dynamic config instead of static almConfig.jira
+### 3. Update Conditional Rendering in App.tsx
+- [x] Add PolarionConfig component rendering when almPlatform === ALMPlatform.POLARION
 
-### 4. Integrate Config UI into Dashboard
-- [x] Add JiraConfig component to App.tsx, conditionally show based on ALM platform selection
+### 4. Update Component Interfaces
+- [x] Update TestCaseDisplay, AlmStatusCell, SingleTestCaseCard, AlmIntegration interfaces to include polarionConfig prop
+
+### 5. Update almService.ts for Dynamic Polarion Config
+- [x] Modify createPolarionWorkItem to accept optional polarionConfig parameter
+- [x] Update createAlmTicket function signature and calls to pass polarionConfig
+
+### 6. Update Documentation
+- [x] Add Polarion API testing section to ALM.md with curl commands, prerequisites, and troubleshooting
 
 ### Followup Steps
-- [ ] Test creating a Jira ticket via the dashboard with dynamic credentials
+- [ ] Test creating a Polarion work item via the dashboard with dynamic credentials
+- [ ] Verify all TypeScript errors are resolved
+- [ ] Ensure the new PolarionConfig component matches the UI style of existing config components
