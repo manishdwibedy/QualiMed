@@ -38,6 +38,9 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ isOpen, onClose }) 
                   src={user.photoURL}
                   alt="Profile"
                   className="w-16 h-16 rounded-full"
+                  onError={(e) => {
+                    e.currentTarget.src = 'https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png';
+                  }}
                 />
               ) : (
                 <UserIcon className="w-8 h-8 text-white" />

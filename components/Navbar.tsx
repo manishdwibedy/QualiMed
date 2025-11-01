@@ -85,6 +85,9 @@ const Navbar: React.FC<NavbarProps> = ({ onSettingsClick, onProfileClick }) => {
                       src={user.photoURL}
                       alt="Profile"
                       className="w-8 h-8 rounded-full"
+                      onError={(e) => {
+                        e.currentTarget.src = 'https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png';
+                      }}
                     />
                   ) : (
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-white">
