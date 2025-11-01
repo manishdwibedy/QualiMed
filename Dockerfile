@@ -1,4 +1,4 @@
-# Use the official Node.js image as the base image
+# Build React app
 FROM node:20-alpine AS build
 
 # Set the working directory
@@ -16,15 +16,34 @@ COPY . .
 # Build the application
 RUN npm run build
 
-# Use a lightweight web server to serve the static files
-FROM nginx:alpine
+# Final stage: Python with Nginx
+FROM python:3.11-alpine
 
-# Copy the built application from the build stage
+# Install Nginx
+RUN apk add --no-cache nginx
+
+# Set working directory
+WORKDIR /app
+
+# Copy built React app
 COPY --from=build /app/dist /usr/share/nginx/html
 
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-# Expose port 80
+# Copy Flask app
+COPY backend/ ./backend/
+
+# Copy requirements and install Python dependencies
+COPY backend/requirements.txt ./backend/
+RUN pip install --no-cache-dir -r backend/requirements.txt
+
+# Copy Nginx config
+COPY nginx.conf /etc/nginx/nginx.conf
+
+# Copy start script
+COPY start.sh /app/start.sh
+RUN chmod +x /app/start.sh
+
+# Expose port 8080
 EXPOSE 8080
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Start script
+CMD ["/app/start.sh"]

@@ -1,4 +1,6 @@
-# TODO: Implement Fallback for User Profile Image on Load Failure
+# TODO: Package React and Flask in Docker with Nginx Proxy
 
-- [x] Update Navbar.tsx: Add onError handler to profile image img tag to set src to generic image URL on load failure
-- [x] Update UserProfileModal.tsx: Add onError handler to profile image img tag to set src to generic image URL on load failure
+- [x] Create `start.sh` script to run Flask in background and start Nginx
+- [x] Update `nginx.conf` to proxy API requests to Flask on localhost:5000
+- [x] Update `Dockerfile` for multi-stage build: React build, then Python+Nginx stage
+- [ ] Build Docker image and test functionality
