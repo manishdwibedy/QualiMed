@@ -17,7 +17,7 @@ export const AlmIntegration: React.FC<AlmIntegrationProps> = ({ testCase, requir
 
   const handleCreateTicket = async () => {
     onUpdate(ALMStatus.LOADING);
-    const result = await createAlmTicket(testCase, requirements, platform, jiraConfig, azureDevOpsConfig, polarionConfig);
+    const result = await createAlmTicket(testCase, platform, jiraConfig, azureDevOpsConfig, polarionConfig, requirements);
 
     if (result.success && result.issueKey) {
       onUpdate(ALMStatus.SUCCESS, { issueKey: result.issueKey });
