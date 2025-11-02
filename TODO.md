@@ -6,6 +6,7 @@
 - [x] Update SettingsModal.tsx: Connect API Keys tab to load/save API keys from Firestore
 - [x] Update RequirementInput.tsx: Remove local API key input, load from settings instead
 - [x] Update geminiService.ts: Disable mock mode for testing
+- [x] Disable Minification in vite.config.ts
 
 ## Followup Steps
 - [x] Test API key storage and retrieval
