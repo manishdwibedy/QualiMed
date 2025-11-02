@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 # Initialize Firebase Admin SDK
 if not firebase_admin._apps:
-    cred = credentials.application_default()
+    cred = credentials.ApplicationDefault()
     firebase_admin.initialize_app(cred, {
         'projectId': 'simply-trade-4fbbd'
     })
