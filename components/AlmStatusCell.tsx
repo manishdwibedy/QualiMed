@@ -1,7 +1,7 @@
 import React from 'react';
 import { type TestCase, type Requirement, ALMStatus, ALMPlatform } from '../types';
 import { createAlmTicket } from '../services/almService';
-import { CheckCircleIcon, XCircleIcon, SpinnerIcon } from './Icons';
+import { CheckCircleIcon, XCircleIcon, SpinnerIcon, ExternalLinkIcon } from './Icons';
 import { logAnalyticsEvent } from '../services/analyticsService';
 
 interface AlmStatusCellProps {
@@ -36,6 +36,23 @@ export const AlmStatusCell: React.FC<AlmStatusCellProps> = ({ testCase, platform
       [ALMPlatform.AZURE_DEVOPS]: 'Create DevOps',
   };
   
+  const getTicketUrl = () => {
+    if (!testCase.almIssueKey) return null;
+
+    switch (platform) {
+      case ALMPlatform.JIRA:
+        return jiraConfig?.instanceUrl ? `${jiraConfig.instanceUrl}/browse/${testCase.almIssueKey}` : null;
+      case ALMPlatform.AZURE_DEVOPS:
+        return azureDevOpsConfig?.organization && azureDevOpsConfig?.project
+          ? `https://dev.azure.com/${azureDevOpsConfig.organization}/${azureDevOpsConfig.project}/_workitems/edit/${testCase.almIssueKey}`
+          : null;
+      case ALMPlatform.POLARION:
+        return polarionConfig?.serverUrl && polarionConfig?.projectId
+          ? `${polarionConfig.serverUrl}/polarion/#/project/${polarionConfig.projectId}/workitem?id=${testCase.almIssueKey}` : null;
+      default:
+        return null;
+    }
+  };
   const buttonClasses = "px-3 py-1 text-xs font-semibold rounded-md transition-colors whitespace-nowrap";
 
   switch (testCase.almStatus) {
@@ -47,12 +64,20 @@ export const AlmStatusCell: React.FC<AlmStatusCellProps> = ({ testCase, platform
         </div>
       );
     case ALMStatus.SUCCESS:
+      const ticketUrl = getTicketUrl();
       return (
         <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
           <CheckCircleIcon className="w-5 h-5 flex-shrink-0" />
           <div className="flex flex-col">
             <span className="font-semibold text-sm">Success</span>
-            <span className="text-xs text-slate-500 dark:text-slate-400 font-mono">{testCase.almIssueKey}</span>
+            <div className="flex items-center gap-1">
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-mono">{testCase.almIssueKey}</span>
+              {ticketUrl && (
+                <a href={ticketUrl} target="_blank" rel="noopener noreferrer" title="Open in new tab" className="text-slate-400 hover:text-sky-500">
+                  <ExternalLinkIcon className="w-3 h-3" />
+                </a>
+              )}
+            </div>
           </div>
         </div>
       );
