@@ -126,8 +126,15 @@ async function generateWithGemini(
       },
     });
 
-    const jsonText = response.text.trim();
-    return JSON.parse(jsonText);
+    // When using responseMimeType: "application/json", the response is structured.
+    // The actual JSON string is in the first part of the first candidate.
+    const candidate = response.candidates?.[0];
+    const jsonText = candidate?.content?.parts?.[0]?.text;
+
+    if (!jsonText) {
+      throw new Error("The AI model did not return a valid JSON response.");
+    }
+    return JSON.parse(jsonText.trim());
 }
 
 async function generateWithOllama(
