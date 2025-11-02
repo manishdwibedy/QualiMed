@@ -83,8 +83,8 @@ async function createJiraTicketReal(testCase: TestCase, jiraConfig?: { instanceU
 
     // Payload for backend
     const payload = {
-        summary: testCase.title,
-        description: description,
+        summary: testCase.name, // Use testCase.name for summary
+        description: testCase.steps[0], // Use the first step as the description
         projectKey: jiraConfig?.projectKey || almConfig.jira?.projectKey || 'HTP',
         issuetype: 'Bug'
     };

@@ -68,7 +68,7 @@ const buildSchema = (categories: string[]) => ({
     properties: {
       category: {
         type: Type.STRING,
-        description: `The category of the test case. Must be one of: '${categories.join("', '")}'.`,
+        description: `The category of the test case. Must be one of: '${categories.map(c => c.replace(/'/g, "\\'")).join("', '")}'.`,
         enum: categories,
       },
       title: {
@@ -127,6 +127,14 @@ async function generateWithGemini(
     });
 
     const jsonText = response.text.trim();
+
+    if (!jsonText) {
+        if (response.promptFeedback?.blockReason) {
+            throw new Error(`The request was blocked by the Gemini API due to: ${response.promptFeedback.blockReason}`);
+        } else {
+            throw new Error("The AI model returned an empty response. This could be due to safety filters or an issue with the prompt.");
+        }
+    }
     return JSON.parse(jsonText);
 }
 
@@ -142,7 +150,7 @@ async function generateWithOllama(
     const ollamaSchemaDescription = `
 You must respond with only a valid JSON array of objects. Do not output any other text, introductory sentences, or code block fences, just the raw JSON.
 Each object in the array must conform to the following properties:
-- category: (string) Must be one of: '${genConfig.categories.join("', '")}'.
+- category: (string) Must be one of: '${genConfig.categories.map(c => c.replace(/'/g, "\\'")).join("', '")}'.
 - title: (string) A concise, descriptive title for the test case.
 - actor: (string) The user or system performing the action.
 - action: (string) The specific action being performed. Use markdown.
