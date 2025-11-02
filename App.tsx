@@ -173,13 +173,14 @@ const AppContent: React.FC = () => {
       topP: latestApiSettings.topP,
     }));
 
-    const effectiveGenerationConfig: GenerationConfig = {
-      ...generationConfig,
+    // Use the just-loaded settings to ensure the generation call is up-to-date.
+    // The state update above is for the UI, but this ensures the current run uses the latest values.
+    const effectiveGenerationConfig: GenerationConfig = { ...generationConfig,
       temperature: latestApiSettings.temperature,
       maxOutputTokens: latestApiSettings.maxOutputTokens,
       topP: latestApiSettings.topP,
     };
-
+    
     const initialStatus: BatchFileStatus[] = files.map(f => ({ name: f.name, status: 'pending' }));
     if (files.length === 0 && requirement.trim()) {
         initialStatus.push({ name: 'Text Input', status: 'pending' });
