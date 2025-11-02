@@ -70,6 +70,7 @@ function buildJiraDescription(testCase: TestCase, requirements?: Requirement[]) 
  * [REAL IMPLEMENTATION] Creates a real test case issue in Jira via backend API to avoid CORS.
  */
 async function createJiraTicketReal(testCase: TestCase, requirements?: Requirement[], jiraConfig?: { instanceUrl: string; userEmail: string; apiToken: string; projectKey: string }): Promise<AlmResult> {
+    console.log('requirements in createJiraTicketReal:', requirements);
     const requirement = requirements?.find(r => r.id === testCase.requirementId);
     let requirementText = testCase.requirement;
     if (requirement) {

@@ -97,6 +97,7 @@ const EditableField: React.FC<{ label: string; value: string; onChange: (value: 
 
 
 export const SingleTestCaseCard: React.FC<SingleTestCaseCardProps> = ({ testCase, requirements, onAlmStatusUpdate, onTestCaseUpdate, almPlatform, jiraConfig, azureDevOpsConfig, polarionConfig }) => {
+  console.log('requirements in SingleTestCaseCard:', requirements);
   const styles = categoryStyles[testCase.category] || genericCategoryStyle;
   const [isEditing, setIsEditing] = useState(false);
   const [editedTestCase, setEditedTestCase] = useState<TestCase>(testCase);

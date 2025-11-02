@@ -16,6 +16,7 @@ interface AlmIntegrationProps {
 export const AlmIntegration: React.FC<AlmIntegrationProps> = ({ testCase, requirements, platform, onUpdate, jiraConfig, azureDevOpsConfig, polarionConfig }) => {
 
   const handleCreateTicket = async () => {
+    console.log('requirements in AlmIntegration:', requirements);
     onUpdate(ALMStatus.LOADING);
     const result = await createAlmTicket(testCase, platform, jiraConfig, azureDevOpsConfig, polarionConfig, requirements);
 

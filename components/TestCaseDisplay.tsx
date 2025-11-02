@@ -56,6 +56,7 @@ export const TestCaseDisplay: React.FC<TestCaseDisplayProps> = ({
     azureDevOpsConfig,
     polarionConfig
 }) => {
+  console.log('requirements in TestCaseDisplay:', requirements);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
   const toggleRow = (id: string) => {
