@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { type TestCase, ALMStatus, ALMPlatform } from '../types';
 import { createAlmTicket } from '../services/almService';
 import { CheckCircleIcon, XCircleIcon, SpinnerIcon } from './Icons';
 import { logAnalyticsEvent } from '../services/analyticsService';
-import { JiraCreationModal } from './JiraCreationModal';
 
 interface AlmStatusCellProps {
   testCase: TestCase;
@@ -15,34 +14,11 @@ interface AlmStatusCellProps {
 }
 
 export const AlmStatusCell: React.FC<AlmStatusCellProps> = ({ testCase, platform, onStatusUpdate, jiraConfig, azureDevOpsConfig, polarionConfig }) => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleCreateTicket = async () => {
-    if (platform === ALMPlatform.JIRA) {
-      setIsModalOpen(true);
-    } else {
-      logAnalyticsEvent('create_alm_ticket_attempt', { platform, test_case_id: testCase.id });
-      onStatusUpdate(testCase.id, ALMStatus.LOADING);
-      const result = await createAlmTicket(testCase, platform, jiraConfig, azureDevOpsConfig, polarionConfig);
-
-      if (result.success && result.issueKey) {
-        logAnalyticsEvent('create_alm_ticket_success', { platform, test_case_id: testCase.id, issue_key: result.issueKey });
-        onStatusUpdate(testCase.id, ALMStatus.SUCCESS, { issueKey: result.issueKey });
-      } else {
-        logAnalyticsEvent('create_alm_ticket_error', { platform, test_case_id: testCase.id, error: result.error });
-        onStatusUpdate(testCase.id, ALMStatus.ERROR, { error: result.error || 'An unknown error occurred.' });
-      }
-    }
-  };
-
-  const handleModalSubmit = async (summary: string, description: string) => {
-    setIsModalOpen(false);
     logAnalyticsEvent('create_alm_ticket_attempt', { platform, test_case_id: testCase.id });
     onStatusUpdate(testCase.id, ALMStatus.LOADING);
-    
-    const modifiedTestCase = { ...testCase, name: summary, steps: [description] };
-
-    const result = await createAlmTicket(modifiedTestCase, platform, jiraConfig, azureDevOpsConfig, polarionConfig);
+    const result = await createAlmTicket(testCase, platform, jiraConfig, azureDevOpsConfig, polarionConfig);
 
     if (result.success && result.issueKey) {
       logAnalyticsEvent('create_alm_ticket_success', { platform, test_case_id: testCase.id, issue_key: result.issueKey });
@@ -97,19 +73,9 @@ export const AlmStatusCell: React.FC<AlmStatusCellProps> = ({ testCase, platform
     case ALMStatus.IDLE:
     default:
       return (
-        <>
-          <button onClick={handleCreateTicket} className={`${buttonClasses} bg-sky-600 hover:bg-sky-700 text-white shadow-sm`}>
-            {platformActionText[platform] || 'Create Ticket'}
-          </button>
-          {platform === ALMPlatform.JIRA && (
-            <JiraCreationModal
-              isOpen={isModalOpen}
-              onClose={() => setIsModalOpen(false)}
-              onSubmit={handleModalSubmit}
-              testCase={testCase}
-            />
-          )}
-        </>
+        <button onClick={handleCreateTicket} className={`${buttonClasses} bg-sky-600 hover:bg-sky-700 text-white shadow-sm`}>
+          {platformActionText[platform] || 'Create Ticket'}
+        </button>
       );
   }
 };
