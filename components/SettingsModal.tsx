@@ -5,6 +5,7 @@ import { JiraConfig } from './JiraConfig';
 import { AzureDevOpsConfig } from './AzureDevOpsConfig';
 import { PolarionConfig } from './PolarionConfig';
 import { loadAlmSettings, saveAlmSettings, AlmSettings, loadApiSettings, saveApiSettings, ApiSettings } from '../services/settingsService';
+import { ModelProvider } from '../types';
 import { base_url } from '../config';
 
 interface SettingsModalProps {
@@ -21,9 +22,13 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
     polarion: { serverUrl: '', username: '', password: '', projectId: '' },
   });
   const [apiSettings, setApiSettings] = useState<ApiSettings>({
+    provider: ModelProvider.GEMINI,
     geminiApiKey: '',
     ollamaUrl: '',
     ollamaModel: '',
+    temperature: 0.4,
+    topK: 32,
+    topP: 1,
   });
   const [isLoading, setIsLoading] = useState(false);
 
@@ -162,50 +167,117 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                      Gemini API Key
+                      Model Provider
                     </label>
-                    <input
-                      type="password"
-                      placeholder="Enter your Gemini API key"
-                      value={apiSettings.geminiApiKey}
-                      onChange={(e) => setApiSettings(prev => ({ ...prev, geminiApiKey: e.target.value }))}
-                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
-                    />
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                      Get your API key from{' '}
-                      <a
-                        href="https://makersuite.google.com/app/apikey"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sky-500 hover:text-sky-600"
-                      >
-                        Google AI Studio
-                      </a>
-                    </p>
+                    <div className="flex flex-wrap gap-4">
+                      {Object.values(ModelProvider).map(provider => (
+                        <label key={provider} className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="model-provider"
+                            value={provider}
+                            checked={apiSettings.provider === provider}
+                            onChange={() => setApiSettings(prev => ({ ...prev, provider }))}
+                            className="h-4 w-4 text-sky-600 border-slate-300 focus:ring-sky-500"
+                          />
+                          <span className="font-medium text-slate-700 dark:text-slate-300">{provider}</span>
+                        </label>
+                      ))}
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                      Ollama URL (Optional)
-                    </label>
-                    <input
-                      type="url"
-                      placeholder="http://localhost:11434"
-                      value={apiSettings.ollamaUrl}
-                      onChange={(e) => setApiSettings(prev => ({ ...prev, ollamaUrl: e.target.value }))}
-                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                      Ollama Model (Optional)
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g., llama3"
-                      value={apiSettings.ollamaModel}
-                      onChange={(e) => setApiSettings(prev => ({ ...prev, ollamaModel: e.target.value }))}
-                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
-                    />
+                  {apiSettings.provider === ModelProvider.GEMINI && (
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        Gemini API Key
+                      </label>
+                      <input
+                        type="password"
+                        placeholder="Enter your Gemini API key"
+                        value={apiSettings.geminiApiKey}
+                        onChange={(e) => setApiSettings(prev => ({ ...prev, geminiApiKey: e.target.value }))}
+                        className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
+                      />
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        Get your API key from{' '}
+                        <a
+                          href="https://makersuite.google.com/app/apikey"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sky-500 hover:text-sky-600"
+                        >
+                          Google AI Studio
+                        </a>
+                      </p>
+                    </div>
+                  )}
+                  {apiSettings.provider === ModelProvider.OLLAMA && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                          Ollama URL
+                        </label>
+                        <input
+                          type="url"
+                          placeholder="http://localhost:11434"
+                          value={apiSettings.ollamaUrl}
+                          onChange={(e) => setApiSettings(prev => ({ ...prev, ollamaUrl: e.target.value }))}
+                          className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                          Ollama Model
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g., llama3"
+                          value={apiSettings.ollamaModel}
+                          onChange={(e) => setApiSettings(prev => ({ ...prev, ollamaModel: e.target.value }))}
+                          className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
+                        />
+                      </div>
+                    </div>
+                  )}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4">
+                    <div>
+                      <label className="flex justify-between items-center text-md font-semibold text-slate-700 dark:text-slate-300">
+                        <span>Temperature</span>
+                        <span className="font-normal text-sm text-slate-500 dark:text-slate-400">{apiSettings.temperature}</span>
+                      </label>
+                      <input
+                        type="range"
+                        min={0} max={1} step={0.1}
+                        value={apiSettings.temperature}
+                        onChange={(e) => setApiSettings(prev => ({ ...prev, temperature: parseFloat(e.target.value) }))}
+                        className="w-full h-2 bg-slate-200 dark:bg-slate-600 rounded-lg appearance-none cursor-pointer accent-sky-600"
+                      />
+                    </div>
+                    <div>
+                      <label className="flex justify-between items-center text-md font-semibold text-slate-700 dark:text-slate-300">
+                        <span>Top-K</span>
+                        <span className="font-normal text-sm text-slate-500 dark:text-slate-400">{apiSettings.topK}</span>
+                      </label>
+                      <input
+                        type="range"
+                        min={1} max={100} step={1}
+                        value={apiSettings.topK}
+                        onChange={(e) => setApiSettings(prev => ({ ...prev, topK: parseInt(e.target.value) }))}
+                        className="w-full h-2 bg-slate-200 dark:bg-slate-600 rounded-lg appearance-none cursor-pointer accent-sky-600"
+                      />
+                    </div>
+                    <div>
+                      <label className="flex justify-between items-center text-md font-semibold text-slate-700 dark:text-slate-300">
+                        <span>Top-P</span>
+                        <span className="font-normal text-sm text-slate-500 dark:text-slate-400">{apiSettings.topP}</span>
+                      </label>
+                      <input
+                        type="range"
+                        min={0} max={1} step={0.05}
+                        value={apiSettings.topP}
+                        onChange={(e) => setApiSettings(prev => ({ ...prev, topP: parseFloat(e.target.value) }))}
+                        className="w-full h-2 bg-slate-200 dark:bg-slate-600 rounded-lg appearance-none cursor-pointer accent-sky-600"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>

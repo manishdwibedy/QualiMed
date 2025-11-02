@@ -1,6 +1,7 @@
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { getAuth } from 'firebase/auth';
+import { ModelProvider } from '../types';
 
 export interface AlmSettings {
   jira: {
@@ -24,9 +25,13 @@ export interface AlmSettings {
 }
 
 export interface ApiSettings {
+  provider: ModelProvider;
   geminiApiKey: string;
   ollamaUrl: string;
   ollamaModel: string;
+  temperature: number;
+  topK: number;
+  topP: number;
 }
 
 const DEFAULT_ALM_SETTINGS: AlmSettings = {
@@ -51,9 +56,13 @@ const DEFAULT_ALM_SETTINGS: AlmSettings = {
 };
 
 const DEFAULT_API_SETTINGS: ApiSettings = {
+  provider: ModelProvider.GEMINI,
   geminiApiKey: '',
   ollamaUrl: '',
   ollamaModel: '',
+  temperature: 0.4,
+  topK: 32,
+  topP: 1,
 };
 
 export const loadAlmSettings = async (): Promise<AlmSettings> => {

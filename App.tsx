@@ -38,12 +38,19 @@ const AppContent: React.FC = () => {
         ]);
         setAlmSettings(almSettingsData);
         setApiSettings(apiSettingsData);
-        // Update modelConfig with loaded API settings
+        // Update modelConfig and generationConfig with loaded API settings
         setModelConfig(prev => ({
           ...prev,
+          provider: apiSettingsData.provider,
           apiKey: apiSettingsData.geminiApiKey,
           ollamaUrl: apiSettingsData.ollamaUrl,
           ollamaModel: apiSettingsData.ollamaModel,
+        }));
+        setGenerationConfig(prev => ({
+          ...prev,
+          temperature: apiSettingsData.temperature,
+          topK: apiSettingsData.topK,
+          topP: apiSettingsData.topP,
         }));
       } catch (error) {
         console.error('Failed to load settings:', error);
@@ -83,9 +90,13 @@ const AppContent: React.FC = () => {
   });
 
   const [apiSettings, setApiSettings] = useState<ApiSettings>({
+    provider: ModelProvider.GEMINI,
     geminiApiKey: '',
     ollamaUrl: '',
     ollamaModel: '',
+    temperature: 0.4,
+    topK: 32,
+    topP: 1,
   });
 
   const handleRequirementChange = (newRequirement: string) => {
@@ -142,12 +153,31 @@ const AppContent: React.FC = () => {
     setError(null);
     setTestCases(null);
 
+    // Reload API settings before generation to ensure latest values
+    const latestApiSettings = await loadApiSettings();
+    setApiSettings(latestApiSettings);
+
     // Merge API settings into model config for generation
     const effectiveModelConfig: ModelConfig = {
-      ...modelConfig,
-      apiKey: modelConfig.apiKey || apiSettings.geminiApiKey,
-      ollamaUrl: modelConfig.ollamaUrl || apiSettings.ollamaUrl,
-      ollamaModel: modelConfig.ollamaModel || apiSettings.ollamaModel,
+      provider: latestApiSettings.provider,
+      apiKey: latestApiSettings.geminiApiKey,
+      ollamaUrl: latestApiSettings.ollamaUrl,
+      ollamaModel: latestApiSettings.ollamaModel,
+    };
+
+    // Update generation config with latest settings
+    setGenerationConfig(prev => ({
+      ...prev,
+      temperature: latestApiSettings.temperature,
+      topK: latestApiSettings.topK,
+      topP: latestApiSettings.topP,
+    }));
+
+    const effectiveGenerationConfig: GenerationConfig = {
+      ...generationConfig,
+      temperature: latestApiSettings.temperature,
+      topK: latestApiSettings.topK,
+      topP: latestApiSettings.topP,
     };
 
     const initialStatus: BatchFileStatus[] = files.map(f => ({ name: f.name, status: 'pending' }));
@@ -162,7 +192,7 @@ const AppContent: React.FC = () => {
       setBatchStatus(prev => prev.map(s => s.name === file.name ? { ...s, status: 'processing' } : s));
       try {
         const documentText = await parseFile(file);
-        const generatedData = await generateTestCaseFromRequirement(requirement, documentText, generationConfig, effectiveModelConfig);
+        const generatedData = await generateTestCaseFromRequirement(requirement, documentText, effectiveGenerationConfig, effectiveModelConfig);
         
         const newTestCases: TestCase[] = generatedData.map((data) => ({
           id: `TC-${crypto.randomUUID()}`,
@@ -190,7 +220,7 @@ const AppContent: React.FC = () => {
         const name = 'Text Input';
         setBatchStatus(prev => prev.map(s => s.name === name ? { ...s, status: 'processing' } : s));
         try {
-            const generatedData = await generateTestCaseFromRequirement(requirement, null, generationConfig, effectiveModelConfig);
+            const generatedData = await generateTestCaseFromRequirement(requirement, null, effectiveGenerationConfig, effectiveModelConfig);
             const newTestCases: TestCase[] = generatedData.map((data) => ({
                 id: `TC-${crypto.randomUUID()}`,
                 title: data.title,

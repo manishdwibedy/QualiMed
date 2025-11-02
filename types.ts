@@ -83,7 +83,11 @@ export interface ModelConfig {
 }
 
 export interface ApiSettings {
+  provider: ModelProvider;
   geminiApiKey: string;
   ollamaUrl: string;
   ollamaModel: string;
+  temperature: number;
+  topK: number;
+  topP: number;
 }

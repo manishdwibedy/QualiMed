@@ -200,6 +200,18 @@ export async function generateTestCaseFromRequirement(
   modelConfig: ModelConfig,
 ): Promise<GeneratedTestCaseData[]> {
 
+  // Log the request details for testing
+  console.log('[AI Request] Provider:', modelConfig.provider);
+  console.log('[AI Request] Model:', modelConfig.provider === ModelProvider.GEMINI ? 'gemini-2.5-flash' : modelConfig.ollamaModel);
+  console.log('[AI Request] Parameters:', {
+    temperature: genConfig.temperature,
+    topK: genConfig.topK,
+    topP: genConfig.topP,
+  });
+  console.log('[AI Request] Categories:', genConfig.categories);
+  console.log('[AI Request] Requirement:', requirement.substring(0, 100) + (requirement.length > 100 ? '...' : ''));
+  console.log('[AI Request] Has document text:', !!documentText);
+
   // --- MOCK MODE FOR TESTING ---
   // Use mock data if testing flag is enabled
   if (USE_MOCK_DATA) {
