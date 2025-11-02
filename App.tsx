@@ -135,6 +135,14 @@ const AppContent: React.FC = () => {
     setError(null);
     setTestCases(null);
 
+    // Merge API settings into model config for generation
+    const effectiveModelConfig: ModelConfig = {
+      ...modelConfig,
+      apiKey: modelConfig.apiKey || apiSettings.geminiApiKey,
+      ollamaUrl: modelConfig.ollamaUrl || apiSettings.ollamaUrl,
+      ollamaModel: modelConfig.ollamaModel || apiSettings.ollamaModel,
+    };
+
     const initialStatus: BatchFileStatus[] = files.map(f => ({ name: f.name, status: 'pending' }));
     if (files.length === 0 && requirement.trim()) {
         initialStatus.push({ name: 'Text Input', status: 'pending' });
@@ -147,7 +155,7 @@ const AppContent: React.FC = () => {
       setBatchStatus(prev => prev.map(s => s.name === file.name ? { ...s, status: 'processing' } : s));
       try {
         const documentText = await parseFile(file);
-        const generatedData = await generateTestCaseFromRequirement(requirement, documentText, generationConfig, modelConfig);
+        const generatedData = await generateTestCaseFromRequirement(requirement, documentText, generationConfig, effectiveModelConfig);
         
         const newTestCases: TestCase[] = generatedData.map((data) => ({
           id: `TC-${crypto.randomUUID()}`,
@@ -175,7 +183,7 @@ const AppContent: React.FC = () => {
         const name = 'Text Input';
         setBatchStatus(prev => prev.map(s => s.name === name ? { ...s, status: 'processing' } : s));
         try {
-            const generatedData = await generateTestCaseFromRequirement(requirement, null, generationConfig, modelConfig);
+            const generatedData = await generateTestCaseFromRequirement(requirement, null, generationConfig, effectiveModelConfig);
             const newTestCases: TestCase[] = generatedData.map((data) => ({
                 id: `TC-${crypto.randomUUID()}`,
                 title: data.title,
