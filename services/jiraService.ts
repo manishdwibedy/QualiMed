@@ -41,7 +41,8 @@ export async function createJiraTicket(testCase: TestCase): Promise<{ success: b
     summary: testCase.title,
     description: description,
     projectKey: 'HTP', // Example Project Key, can be made configurable
-    issuetype: 'Test Case'
+    issuetype: 'Test Case',
+    userId: user.uid
   };
 
   console.log('Backend Payload:', JSON.stringify(payload, null, 2));

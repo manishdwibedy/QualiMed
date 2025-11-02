@@ -1,5 +1,5 @@
-# TODO: Add Logging for Jira Credentials Debugging
+# TODO: Fix Jira User ID Issue
 
-- [x] Replace print(alm_settings) with logger.info(f"ALM settings: {alm_settings}")
-- [x] Add logger.info(f"Jira creds: {jira_creds}")
-- [x] Add logger.info(f"Base URL: {base_url}, Email: {email}, API Token: {'present' if api_token else 'missing'}")
+- [x] Modify `services/jiraService.ts` to include `userId` in the payload for redundancy.
+- [ ] Test the changes by running the app and attempting to create a Jira ticket.
+- [ ] Verify backend logs for user_id and frontend console for payload.
