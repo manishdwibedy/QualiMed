@@ -1,18 +1,25 @@
 
-import { type TestCase } from '../types';
+import { type TestCase, type Requirement } from '../types';
 import { base_url } from '../config';
 import { getAuth } from 'firebase/auth';
 
 /**
  * Creates a new test case issue in Jira by calling the backend API.
  * @param testCase - The test case data to be sent.
+ * @param requirements - The list of requirements to find traceability information.
  * @returns A promise that resolves with the result of the operation.
  */
-export async function createJiraTicket(testCase: TestCase): Promise<{ success: boolean; issueKey?: string; error?: string }> {
+export async function createJiraTicket(testCase: TestCase, requirements?: Requirement[]): Promise<{ success: boolean; issueKey?: string; error?: string }> {
   console.log('Creating Jira ticket via backend...');
+
+  const requirement = requirements?.find(r => r.id === testCase.requirementId);
 
   // Build description as a string
   let description = `Original Requirement Context: ${testCase.requirement}\n\n`;
+
+  if (requirement) {
+    description = `*Traceability*\n*Requirement ID:* ${requirement.id}\n*Source:* ${requirement.source}\n*Compliance:* ${requirement.compliance.join(', ')}\n\n${description}`;
+  }
 
   if (testCase.preConditions) {
     description += `## Pre-Conditions\n${testCase.preConditions}\n\n`;
