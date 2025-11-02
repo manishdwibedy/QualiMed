@@ -43,7 +43,7 @@ const Navbar: React.FC<NavbarProps> = ({ onSettingsClick, onProfileClick }) => {
           <div className="flex items-center gap-3">
             <FolderPlusIcon className="w-8 h-8 text-sky-500" />
             <h1 className="text-xl font-bold text-slate-800 dark:text-slate-200">
-              QualiMed
+              QualiMed1
             </h1>
           </div>
 
