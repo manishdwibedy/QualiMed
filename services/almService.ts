@@ -175,10 +175,10 @@ async function createJiraTicketSimulated(testCase: TestCase, requirements?: Requ
 async function createJiraTicket(testCase: TestCase, jiraConfig?: { instanceUrl: string; userEmail: string; apiToken: string; projectKey: string }, requirements?: Requirement[]): Promise<AlmResult> {
   // --- TOGGLE BETWEEN REAL AND SIMULATED ---
   // To use the REAL Jira API, comment out the line below:
-  return createJiraTicketSimulated(testCase, requirements);
+  //   return createJiraTicketSimulated(testCase, requirements);
 
   // And uncomment this line:
-  // return createJiraTicketReal(testCase, jiraConfig, requirements);
+  return createJiraTicketReal(testCase, jiraConfig, requirements);
 }
 
 /**
