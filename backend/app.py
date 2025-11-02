@@ -7,6 +7,8 @@ import base64
 import requests
 from pathlib import Path
 import logging
+import firebase_admin
+from firebase_admin import credentials, firestore
 
 app = Flask(__name__)
 CORS(app)
@@ -19,31 +21,19 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Simple local credential store (JSON file)
-CRED_DIR = Path(__file__).parent / "data"
-CRED_FILE = CRED_DIR / "credentials.json"
-
-def _ensure_store():
-    CRED_DIR.mkdir(parents=True, exist_ok=True)
-    if not CRED_FILE.exists():
-        CRED_FILE.write_text(json.dumps({}), encoding="utf-8")
-
-def _load_creds():
-    _ensure_store()
-    try:
-        return json.loads(CRED_FILE.read_text(encoding="utf-8"))
-    except json.JSONDecodeError:
-        return {}
-
-def _save_creds(creds):
-    _ensure_store()
-    CRED_FILE.write_text(json.dumps(creds, indent=2), encoding="utf-8")
+# Initialize Firebase Admin SDK
+if not firebase_admin._apps:
+    cred = credentials.application_default()
+    firebase_admin.initialize_app(cred, {
+        'projectId': 'simply-trade-4fbbd'
+    })
+db = firestore.client()
 
 # Health check
 @app.get("/health")
 def health():
     logger.info(f"Health check requested from {request.remote_addr}")
-    return jsonify({"status": "ok", "credentialStore": CRED_FILE.exists()}), 200
+    return jsonify({"status": "ok"}), 200
 
 
 def validate_payload(required_fields):
@@ -63,11 +53,15 @@ def validate_payload(required_fields):
 
 @app.post("/create/jira")
 def create_jira_test_case():
-    """Create an issue in Jira via REST API. Requires summary and description; projectKey and issuetype optional."""
+    """Create an issue in Jira via REST API. Requires summary, description, and userId."""
     logger.info(f"Jira test case creation requested from {request.remote_addr}")
     try:
         # Validate that summary and description are provided
         data = validate_payload(["summary", "description"])
+        # Get userId from payload or header
+        user_id = data.get("userId") or request.headers.get("X-User-Id")
+        if not user_id:
+            raise BadRequest("Missing userId in payload or X-User-Id header")
         # Project key: payload or default env
         project_key = data.get("projectKey") or os.getenv("JIRA_PROJECT_KEY")
         if not project_key:
@@ -90,17 +84,22 @@ def create_jira_test_case():
                 "issuetype": issue_type
             }
         }
-        # Load Jira credentials from local store or env
-        creds = _load_creds().get("jira", {})
-        base_url = creds.get("baseUrl") or os.getenv("JIRA_BASE_URL")
-        email = creds.get("email") or os.getenv("JIRA_EMAIL")
-        api_token = creds.get("apiToken") or os.getenv("JIRA_API_TOKEN")
-        print( base_url, email, api_token)
-        print( creds)
-        print( os.getenv("JIRA_BASE_URL"), os.getenv("JIRA_EMAIL"), os.getenv("JIRA_API_TOKEN"))
-        
+        # Fetch Jira credentials from Firestore
+        doc_ref = db.collection('userSettings').document(user_id)
+        doc = doc_ref.get()
+        if not doc.exists:
+            raise BadRequest("User settings not found")
+        alm_settings = doc.to_dict().get('almSettings', {})
+        jira_creds = alm_settings.get('jira', {})
+        base_url = jira_creds.get("instanceUrl")
+        email = jira_creds.get("userEmail")
+        api_token = jira_creds.get("apiToken")
+
+        logger.info(f"ALM settings: {alm_settings}")
+        logger.info(f"Jira creds: {jira_creds}")
+        logger.info(f"Base URL: {base_url}, Email: {email}, API Token: {'present' if api_token else 'missing'}")
         if not (base_url and email and api_token):
-            raise BadRequest("Jira credentials not configured")
+            raise BadRequest("Jira credentials not configured in Firestore")
 
         # Prepare Basic auth header
         auth_str = f"{email}:{api_token}"
@@ -166,48 +165,7 @@ def create_azure_devops_test_case():
         raise
 
 
-# Credential endpoints
-@app.post("/credentials/jira")
-def save_jira_credentials():
-    logger.info(f"Jira credentials save requested from {request.remote_addr}")
-    try:
-        data = validate_payload(["baseUrl", "email", "apiToken"])
-        creds = _load_creds()
-        creds["jira"] = {"baseUrl": data["baseUrl"], "email": data["email"], "apiToken": data["apiToken"]}
-        _save_creds(creds)
-        logger.info("Jira credentials saved successfully")
-        return jsonify({"status": "saved", "system": "jira"}), 200
-    except Exception as e:
-        logger.error(f"Error saving Jira credentials: {str(e)}")
-        raise
 
-@app.post("/credentials/polarion")
-def save_polarion_credentials():
-    logger.info(f"Polarion credentials save requested from {request.remote_addr}")
-    try:
-        data = validate_payload(["baseUrl", "username", "password"])
-        creds = _load_creds()
-        creds["polarion"] = {"baseUrl": data["baseUrl"], "username": data["username"], "password": data["password"]}
-        _save_creds(creds)
-        logger.info("Polarion credentials saved successfully")
-        return jsonify({"status": "saved", "system": "polarion"}), 200
-    except Exception as e:
-        logger.error(f"Error saving Polarion credentials: {str(e)}")
-
-
-@app.post("/credentials/azure")
-def save_azure_credentials():
-    logger.info(f"Azure credentials save requested from {request.remote_addr}")
-    try:
-        data = validate_payload(["organization", "personalAccessToken"])
-        creds = _load_creds()
-        creds["azure"] = {"organization": data["organization"], "personalAccessToken": data["personalAccessToken"]}
-        _save_creds(creds)
-        logger.info("Azure credentials saved successfully")
-        return jsonify({"status": "saved", "system": "azure"}), 200
-    except Exception as e:
-        logger.error(f"Error saving Azure credentials: {str(e)}")
-        raise
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     logger.info(f"Starting Flask app on host 0.0.0.0 port {port}")

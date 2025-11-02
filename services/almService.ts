@@ -3,6 +3,7 @@ import { type TestCase, ALMPlatform } from '../types';
 // If this file does not exist, you will see a build error.
 // Please follow the instructions in INSTALLATION.md to create this file.
 import { almConfig, base_url } from '../config';
+import { getAuth } from 'firebase/auth';
 
 interface AlmResult {
   success: boolean;
@@ -73,6 +74,13 @@ async function createJiraTicketReal(testCase: TestCase, jiraConfig?: { instanceU
 
     description += `## Expected Result\n${testCase.expectedResult}`;
 
+    // Get user ID
+    const user = getAuth().currentUser;
+    console.log('Jira Ticket Creation - Current User:', user);
+    if (!user) {
+        return { success: false, error: 'User not authenticated' };
+    }
+
     // Payload for backend
     const payload = {
         summary: testCase.title,
@@ -88,6 +96,7 @@ async function createJiraTicketReal(testCase: TestCase, jiraConfig?: { instanceU
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'X-User-Id': user.uid,
             },
             body: JSON.stringify(payload),
         });

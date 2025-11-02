@@ -1,6 +1,7 @@
 
 import { type TestCase } from '../types';
 import { base_url } from '../config';
+import { getAuth } from 'firebase/auth';
 
 /**
  * Creates a new test case issue in Jira by calling the backend API.
@@ -29,6 +30,12 @@ export async function createJiraTicket(testCase: TestCase): Promise<{ success: b
 
   description += `## Expected Result\n${testCase.expectedResult}`;
 
+  // Get user ID
+  const user = getAuth().currentUser;
+  if (!user) {
+    throw new Error('User not authenticated');
+  }
+
   // Payload for backend
   const payload = {
     summary: testCase.title,
@@ -44,6 +51,7 @@ export async function createJiraTicket(testCase: TestCase): Promise<{ success: b
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'X-User-Id': user.uid,
       },
       body: JSON.stringify(payload),
     });
