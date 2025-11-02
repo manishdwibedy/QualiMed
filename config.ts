@@ -6,7 +6,7 @@
 // Firebase Auth Configuration
 
 // export const base_url = 'http://localhost:5000';
-export const base_url = 'https://qualimed-backend-142826139203.us-central1.run.app/';
+export const base_url = 'https://qualimed-backend-142826139203.us-central1.run.app';
 
 export const firebaseConfig = {
   apiKey: "AIzaSyD9IJ5WA-ER1dCQJasA6gQFsSTxcLqGfos",
