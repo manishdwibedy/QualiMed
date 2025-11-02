@@ -18,11 +18,15 @@ interface AlmResult {
  */
 function buildJiraDescription(testCase: TestCase, requirements?: Requirement[]) {
   const requirement = requirements?.find(r => r.id === testCase.requirementId);
+  let requirementText = testCase.requirement;
+  if (requirement) {
+    requirementText = `${requirement.id}: ${requirement.text}`;
+  }
 
   const content: any[] = [
     {
       type: 'paragraph',
-      content: [ { type: 'text', text: 'Original Requirement Context: ' + testCase.requirement } ],
+      content: [ { type: 'text', text: requirementText } ],
     },
   ];
 
@@ -67,9 +71,13 @@ function buildJiraDescription(testCase: TestCase, requirements?: Requirement[]) 
  */
 async function createJiraTicketReal(testCase: TestCase, jiraConfig?: { instanceUrl: string; userEmail: string; apiToken: string; projectKey: string }, requirements?: Requirement[]): Promise<AlmResult> {
     const requirement = requirements?.find(r => r.id === testCase.requirementId);
+    let requirementText = testCase.requirement;
+    if (requirement) {
+        requirementText = `${requirement.id}: ${requirement.text}`;
+    }
 
     // Build description as a string for backend
-    let description = `Original Requirement Context: ${testCase.requirement}\n\n`;
+    let description = `${requirementText}\n\n`;
 
     if (requirement) {
         description = `*Traceability*\n*Requirement ID:* ${requirement.id}\n*Source:* ${requirement.source}\n*Compliance:* ${requirement.compliance.join(', ')}\n\n${description}`;
