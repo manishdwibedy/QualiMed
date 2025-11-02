@@ -105,7 +105,17 @@ export const loadApiSettings = async (): Promise<ApiSettings> => {
 
   if (docSnap.exists()) {
     const savedSettings = docSnap.data().apiSettings;
-    return savedSettings ? { ...DEFAULT_API_SETTINGS, ...savedSettings } : DEFAULT_API_SETTINGS;
+    if (savedSettings) {
+      const merged = { ...DEFAULT_API_SETTINGS };
+      Object.keys(savedSettings).forEach(key => {
+        if (savedSettings[key] !== undefined) {
+          merged[key] = savedSettings[key];
+        }
+      });
+      return merged;
+    } else {
+      return DEFAULT_API_SETTINGS;
+    }
   } else {
     return DEFAULT_API_SETTINGS;
   }
