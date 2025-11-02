@@ -1,0 +1,18 @@
+# Backend-only Docker image for Flask app
+FROM python:3.11-alpine
+
+# Set working directory
+WORKDIR /app
+
+# Copy requirements and install Python dependencies
+COPY backend/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy Flask app
+COPY backend/ .
+
+# Expose port 8080 for Cloud Run
+EXPOSE 8080
+
+# Start the Flask app
+CMD ["python", "app.py"]

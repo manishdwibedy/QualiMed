@@ -1,3 +1,4 @@
+from flask import Flask, request, jsonify
 from werkzeug.exceptions import BadRequest
 import json
 import os
@@ -200,5 +201,6 @@ def save_azure_credentials():
         logger.error(f"Error saving Azure credentials: {str(e)}")
         raise
 if __name__ == "__main__":
-    logger.info("Starting Flask app on host 0.0.0.0 port 5000")
-    app.run(host="0.0.0.0", port=5000)
+    port = int(os.environ.get("PORT", 8080))
+    logger.info(f"Starting Flask app on host 0.0.0.0 port {port}")
+    app.run(host="0.0.0.0", port=port)
