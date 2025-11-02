@@ -351,6 +351,8 @@ async function createAzureDevOpsWorkItem(testCase: TestCase, azureDevOpsConfig?:
  * @returns A promise that resolves with the result of the operation.
  */
 export async function createAlmTicket(testCase: TestCase, requirements: Requirement[], platform: ALMPlatform, jiraConfig?: { instanceUrl: string; userEmail: string; apiToken: string; projectKey: string }, azureDevOpsConfig?: { organization: string; project: string; personalAccessToken: string; workItemType: string }, polarionConfig?: { serverUrl: string; username: string; password: string; projectId: string }): Promise<AlmResult> {
+  console.log('platform type:', typeof platform);
+  console.log('platform value:', platform);
   console.log(`Attempting ticket creation for ${platform}...`);
 
   switch (platform) {
