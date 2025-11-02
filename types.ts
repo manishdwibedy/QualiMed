@@ -65,7 +65,7 @@ export interface BatchFileStatus {
 export interface GenerationConfig {
   systemInstruction: string;
   temperature: number;
-  topK: number;
+  maxOutputTokens: number;
   topP: number;
   categories: string[];
 }
@@ -88,6 +88,6 @@ export interface ApiSettings {
   ollamaUrl: string;
   ollamaModel: string;
   temperature: number;
-  topK: number;
+  maxOutputTokens: number;
   topP: number;
 }

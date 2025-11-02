@@ -121,7 +121,7 @@ async function generateWithGemini(
         responseMimeType: "application/json",
         responseSchema: buildSchema(genConfig.categories),
         temperature: genConfig.temperature,
-        topK: genConfig.topK,
+        maxOutputTokens: genConfig.maxOutputTokens,
         topP: genConfig.topP,
       },
     });
@@ -164,7 +164,7 @@ Each object in the array must conform to the following properties:
             stream: false,
             options: {
                 temperature: genConfig.temperature,
-                top_k: genConfig.topK,
+                max_output_tokens: genConfig.maxOutputTokens,
                 top_p: genConfig.topP,
             }
         }),
@@ -205,7 +205,7 @@ export async function generateTestCaseFromRequirement(
   console.log('[AI Request] Model:', modelConfig.provider === ModelProvider.GEMINI ? 'gemini-2.5-flash' : modelConfig.ollamaModel);
   console.log('[AI Request] Parameters:', {
     temperature: genConfig.temperature,
-    topK: genConfig.topK,
+    maxOutputTokens: genConfig.maxOutputTokens,
     topP: genConfig.topP,
   });
   console.log('[AI Request] Categories:', genConfig.categories);

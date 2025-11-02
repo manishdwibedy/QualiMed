@@ -30,7 +30,7 @@ export interface ApiSettings {
   ollamaUrl: string;
   ollamaModel: string;
   temperature: number;
-  topK: number;
+  maxOutputTokens: number;
   topP: number;
 }
 
@@ -60,9 +60,9 @@ const DEFAULT_API_SETTINGS: ApiSettings = {
   geminiApiKey: '',
   ollamaUrl: '',
   ollamaModel: '',
-  temperature: 0.4,
-  topK: 32,
-  topP: 1,
+  temperature: 1.0,
+  maxOutputTokens: 1000,
+  topP: 0.95,
 };
 
 export const loadAlmSettings = async (): Promise<AlmSettings> => {

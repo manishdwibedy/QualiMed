@@ -27,7 +27,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
     ollamaUrl: '',
     ollamaModel: '',
     temperature: 0.4,
-    topK: 32,
+    maxOutputTokens: 1000,
     topP: 1,
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -246,7 +246,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                       </label>
                       <input
                         type="range"
-                        min={0} max={1} step={0.1}
+                        min={0.0} max={2.0} step={0.1}
                         value={apiSettings.temperature}
                         onChange={(e) => setApiSettings(prev => ({ ...prev, temperature: parseFloat(e.target.value) }))}
                         className="w-full h-2 bg-slate-200 dark:bg-slate-600 rounded-lg appearance-none cursor-pointer accent-sky-600"
@@ -255,13 +255,13 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                     <div>
                       <label className="flex justify-between items-center text-md font-semibold text-slate-700 dark:text-slate-300">
                         <span>Top-K</span>
-                        <span className="font-normal text-sm text-slate-500 dark:text-slate-400">{apiSettings.topK}</span>
+                        <span className="font-normal text-sm text-slate-500 dark:text-slate-400">{apiSettings.maxOutputTokens}</span>
                       </label>
                       <input
                         type="range"
-                        min={1} max={100} step={1}
-                        value={apiSettings.topK}
-                        onChange={(e) => setApiSettings(prev => ({ ...prev, topK: parseInt(e.target.value) }))}
+                        min={1} max={2000} step={1}
+                        value={apiSettings.maxOutputTokens}
+                        onChange={(e) => setApiSettings(prev => ({ ...prev, maxOutputTokens: parseInt(e.target.value) }))}
                         className="w-full h-2 bg-slate-200 dark:bg-slate-600 rounded-lg appearance-none cursor-pointer accent-sky-600"
                       />
                     </div>

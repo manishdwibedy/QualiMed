@@ -49,7 +49,7 @@ const AppContent: React.FC = () => {
         setGenerationConfig(prev => ({
           ...prev,
           temperature: apiSettingsData.temperature,
-          topK: apiSettingsData.topK,
+          maxOutputTokens: apiSettingsData.maxOutputTokens,
           topP: apiSettingsData.topP,
         }));
       } catch (error) {
@@ -77,7 +77,7 @@ const AppContent: React.FC = () => {
   const [generationConfig, setGenerationConfig] = useState<GenerationConfig>({
     systemInstruction: DEFAULT_SYSTEM_INSTRUCTION,
     temperature: 0.4,
-    topK: 32,
+    maxOutputTokens: 32,
     topP: 1,
     categories: Object.values(DefaultTestCaseCategory),
   });
@@ -95,7 +95,7 @@ const AppContent: React.FC = () => {
     ollamaUrl: '',
     ollamaModel: '',
     temperature: 0.4,
-    topK: 32,
+    maxOutputTokens: 32,
     topP: 1,
   });
 
@@ -169,14 +169,14 @@ const AppContent: React.FC = () => {
     setGenerationConfig(prev => ({
       ...prev,
       temperature: latestApiSettings.temperature,
-      topK: latestApiSettings.topK,
+      maxOutputTokens: latestApiSettings.maxOutputTokens,
       topP: latestApiSettings.topP,
     }));
 
     const effectiveGenerationConfig: GenerationConfig = {
       ...generationConfig,
       temperature: latestApiSettings.temperature,
-      topK: latestApiSettings.topK,
+      maxOutputTokens: latestApiSettings.maxOutputTokens,
       topP: latestApiSettings.topP,
     };
 
