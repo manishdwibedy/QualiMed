@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 from werkzeug.exceptions import BadRequest
+from flask_cors import CORS
 import json
 import os
 import base64
@@ -8,6 +9,7 @@ from pathlib import Path
 import logging
 
 app = Flask(__name__)
+CORS(app)
 
 # Configure logging
 logging.basicConfig(
@@ -93,6 +95,10 @@ def create_jira_test_case():
         base_url = creds.get("baseUrl") or os.getenv("JIRA_BASE_URL")
         email = creds.get("email") or os.getenv("JIRA_EMAIL")
         api_token = creds.get("apiToken") or os.getenv("JIRA_API_TOKEN")
+        print( base_url, email, api_token)
+        print( creds)
+        print( os.getenv("JIRA_BASE_URL"), os.getenv("JIRA_EMAIL"), os.getenv("JIRA_API_TOKEN"))
+        
         if not (base_url and email and api_token):
             raise BadRequest("Jira credentials not configured")
 
