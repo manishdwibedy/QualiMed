@@ -5,6 +5,7 @@ import { DocumentArrowDownIcon } from './Icons';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { AlmStatusCell } from './AlmStatusCell';
+import { logAnalyticsEvent } from '../services/analyticsService';
 
 interface TestCaseDisplayProps {
   testCases: TestCase[];
@@ -69,6 +70,8 @@ export const TestCaseDisplay: React.FC<TestCaseDisplayProps> = ({
 
   const handleExportPdf = useCallback(() => {
     if (!testCases || testCases.length === 0) return;
+
+    logAnalyticsEvent('export_test_cases', { format: 'pdf', count: testCases.length });
 
     // Type assertion because jspdf-autotable extends the jsPDF prototype
     const doc = new jsPDF() as jsPDF & { autoTable: (options: any) => jsPDF };

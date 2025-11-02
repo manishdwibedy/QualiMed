@@ -13,6 +13,7 @@ import Login from './components/Login';
 import Navbar from './components/Navbar';
 import { enableAuth } from './config';
 import { loadAlmSettings, AlmSettings } from './services/settingsService';
+import { logAnalyticsEvent } from './services/analyticsService';
 
 // Configure the PDF.js worker to enable text extraction.
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@4.5.136/build/pdf.worker.min.mjs`;
@@ -115,6 +116,11 @@ const AppContent: React.FC = () => {
       setError('A requirement description or at least one document is required.');
       return;
     }
+    logAnalyticsEvent('generate_test_cases_start', {
+      has_requirement: !!requirement.trim(),
+      file_count: files.length,
+      model_provider: modelConfig.provider
+    });
     setIsLoading(true);
     setError(null);
     setTestCases(null);
@@ -185,6 +191,11 @@ const AppContent: React.FC = () => {
 
     setTestCases(allGeneratedTestCases);
     setIsLoading(false);
+    logAnalyticsEvent('generate_test_cases_complete', {
+      test_case_count: allGeneratedTestCases.length,
+      file_count: files.length,
+      has_errors: batchStatus.some(s => s.status === 'error')
+    });
   }, [requirement, files, generationConfig, modelConfig]);
   
   const handleAlmStatusUpdate = (testCaseId: string, status: ALMStatus, result?: { issueKey?: string, error?: string }) => {
@@ -228,11 +239,12 @@ const AppContent: React.FC = () => {
     const jsonString = JSON.stringify(testCases, null, 2);
     const blob = new Blob([jsonString], { type: 'application/json' });
     triggerDownload(`test-cases-${Date.now()}.json`, blob);
+    logAnalyticsEvent('export_test_cases', { format: 'json', count: testCases.length });
   }, [testCases]);
 
   const handleExportMarkdown = useCallback(() => {
     if (!testCases || testCases.length === 0) return;
-    
+
     const markdownString = testCases.map(tc => {
       let content = `
 # ${tc.title} (${tc.id})
@@ -278,6 +290,7 @@ ${tc.expectedResult}
 
     const blob = new Blob([markdownString], { type: 'text/markdown' });
     triggerDownload(`test-cases-${Date.now()}.md`, blob);
+    logAnalyticsEvent('export_test_cases', { format: 'markdown', count: testCases.length });
   }, [testCases]);
 
   return (

@@ -2,6 +2,7 @@ import React from 'react';
 import { type TestCase, ALMStatus, ALMPlatform } from '../types';
 import { createAlmTicket } from '../services/almService';
 import { CheckCircleIcon, XCircleIcon, SpinnerIcon } from './Icons';
+import { logAnalyticsEvent } from '../services/analyticsService';
 
 interface AlmStatusCellProps {
   testCase: TestCase;
@@ -15,12 +16,15 @@ interface AlmStatusCellProps {
 export const AlmStatusCell: React.FC<AlmStatusCellProps> = ({ testCase, platform, onStatusUpdate, jiraConfig, azureDevOpsConfig, polarionConfig }) => {
 
   const handleCreateTicket = async () => {
+    logAnalyticsEvent('create_alm_ticket_attempt', { platform, test_case_id: testCase.id });
     onStatusUpdate(testCase.id, ALMStatus.LOADING);
     const result = await createAlmTicket(testCase, platform, jiraConfig, azureDevOpsConfig, polarionConfig);
 
     if (result.success && result.issueKey) {
+      logAnalyticsEvent('create_alm_ticket_success', { platform, test_case_id: testCase.id, issue_key: result.issueKey });
       onStatusUpdate(testCase.id, ALMStatus.SUCCESS, { issueKey: result.issueKey });
     } else {
+      logAnalyticsEvent('create_alm_ticket_error', { platform, test_case_id: testCase.id, error: result.error });
       onStatusUpdate(testCase.id, ALMStatus.ERROR, { error: result.error || 'An unknown error occurred.' });
     }
   };

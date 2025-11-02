@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from './AuthProvider';
 import { FolderPlusIcon } from './Icons';
+import { logAnalyticsEvent } from '../services/analyticsService';
 
 interface LoginProps {
   onSwitchToSignUp?: () => void;
@@ -18,6 +19,7 @@ const Login: React.FC<LoginProps> = ({ onSwitchToSignUp }) => {
     setError(null);
     try {
       await signInWithGoogle();
+      logAnalyticsEvent('login', { method: 'google' });
     } catch (err) {
       setError('Failed to sign in. Please try again.');
       console.error('Sign in error:', err);
@@ -32,6 +34,7 @@ const Login: React.FC<LoginProps> = ({ onSwitchToSignUp }) => {
     setError(null);
     try {
       await signInWithEmailPassword(email, password);
+      logAnalyticsEvent('login', { method: 'email' });
     } catch (err: any) {
       setError(err.message || 'Failed to sign in. Please try again.');
       console.error('Email sign-in error:', err);

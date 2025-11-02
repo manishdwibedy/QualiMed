@@ -4,6 +4,7 @@ import { useTheme } from './ThemeProvider';
 import { FolderPlusIcon, SunIcon, MoonIcon } from './Icons';
 import SettingsModal from './SettingsModal';
 import UserProfileModal from './UserProfileModal';
+import { logAnalyticsEvent } from '../services/analyticsService';
 
 interface NavbarProps {
   onSettingsClick?: () => void;
@@ -20,6 +21,7 @@ const Navbar: React.FC<NavbarProps> = ({ onSettingsClick, onProfileClick }) => {
   const handleLogout = async () => {
     try {
       await logout();
+      logAnalyticsEvent('logout');
     } catch (error) {
       console.error('Error logging out:', error);
     }
@@ -33,6 +35,7 @@ const Navbar: React.FC<NavbarProps> = ({ onSettingsClick, onProfileClick }) => {
   const handleProfileClick = () => {
     setIsProfileModalOpen(true);
     setIsProfileMenuOpen(false);
+    logAnalyticsEvent('profile_view');
   };
 
   return (
@@ -51,7 +54,10 @@ const Navbar: React.FC<NavbarProps> = ({ onSettingsClick, onProfileClick }) => {
           <div className="flex items-center gap-4">
             {/* Theme Toggle Button */}
             <button
-              onClick={toggleTheme}
+              onClick={() => {
+                toggleTheme();
+                logAnalyticsEvent('theme_toggle', { new_theme: theme === 'light' ? 'dark' : 'light' });
+              }}
               className="p-2 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
               title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
             >

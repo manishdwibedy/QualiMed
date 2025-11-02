@@ -2,6 +2,7 @@ import React, { useCallback, useState, useEffect } from 'react';
 import { useDropzone, FileRejection } from 'react-dropzone';
 import { FileIcon, UploadCloudIcon, XIcon, XCircleIcon, SettingsIcon, ServerIcon, KeyIcon } from './Icons';
 import { type GenerationConfig, type ModelConfig, ModelProvider } from '../types';
+import { logAnalyticsEvent } from '../services/analyticsService';
 
 interface RequirementInputProps {
   requirement: string;
@@ -71,6 +72,13 @@ export const RequirementInput: React.FC<RequirementInputProps> = ({
     const newUniqueFiles = acceptedFiles.filter(f => !existingFileNames.has(f.name));
     onFilesChange([...files, ...newUniqueFiles]);
     setRejectedFiles(fileRejections);
+
+    if (newUniqueFiles.length > 0) {
+      logAnalyticsEvent('file_upload', {
+        count: newUniqueFiles.length,
+        types: newUniqueFiles.map(f => f.type || 'unknown')
+      });
+    }
   }, [onFilesChange, files]);
 
   const isDisabled = isLoading;
