@@ -254,12 +254,12 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                     </div>
                     <div>
                       <label className="flex justify-between items-center text-md font-semibold text-slate-700 dark:text-slate-300">
-                        <span>Top-K</span>
+                        <span>Max Output Tokens</span>
                         <span className="font-normal text-sm text-slate-500 dark:text-slate-400">{apiSettings.maxOutputTokens}</span>
                       </label>
                       <input
                         type="range"
-                        min={1} max={2000} step={1}
+                        min={50} max={65000} step={1}
                         value={apiSettings.maxOutputTokens}
                         onChange={(e) => setApiSettings(prev => ({ ...prev, maxOutputTokens: parseInt(e.target.value) }))}
                         className="w-full h-2 bg-slate-200 dark:bg-slate-600 rounded-lg appearance-none cursor-pointer accent-sky-600"

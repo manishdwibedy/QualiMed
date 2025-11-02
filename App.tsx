@@ -77,7 +77,7 @@ const AppContent: React.FC = () => {
   const [generationConfig, setGenerationConfig] = useState<GenerationConfig>({
     systemInstruction: DEFAULT_SYSTEM_INSTRUCTION,
     temperature: 0.4,
-    maxOutputTokens: 32,
+    maxOutputTokens: 1000,
     topP: 1,
     categories: Object.values(DefaultTestCaseCategory),
   });
@@ -95,7 +95,7 @@ const AppContent: React.FC = () => {
     ollamaUrl: '',
     ollamaModel: '',
     temperature: 0.4,
-    maxOutputTokens: 32,
+    maxOutputTokens: 1000,
     topP: 1,
   });
 
