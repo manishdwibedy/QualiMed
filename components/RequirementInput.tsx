@@ -172,7 +172,7 @@ export const RequirementInput: React.FC<RequirementInputProps> = ({
           value={requirement}
           onChange={(e) => setRequirement(e.target.value)}
           placeholder="e.g., Generate security test cases for the features described in the attached document(s)."
-          className="w-full h-24 p-3 bg-slate-100 dark:bg-slate-700 border-2 border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition duration-200 resize-none"
+          className="w-full h-24 p-3 bg-slate-100 dark:bg-slate-700 border-2 border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition duration-200 resize-y"
           disabled={isDisabled}
           aria-label="Software Requirement Context Input"
         />
