@@ -38,6 +38,13 @@ const AppContent: React.FC = () => {
         ]);
         setAlmSettings(almSettingsData);
         setApiSettings(apiSettingsData);
+        // Update modelConfig with loaded API settings
+        setModelConfig(prev => ({
+          ...prev,
+          apiKey: apiSettingsData.geminiApiKey,
+          ollamaUrl: apiSettingsData.ollamaUrl,
+          ollamaModel: apiSettingsData.ollamaModel,
+        }));
       } catch (error) {
         console.error('Failed to load settings:', error);
       }
