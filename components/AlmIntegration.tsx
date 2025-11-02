@@ -17,7 +17,7 @@ export const AlmIntegration: React.FC<AlmIntegrationProps> = ({ testCase, requir
 
   const handleCreateTicket = async () => {
     console.log('requirements in AlmIntegration:', requirements);
-    onUpdate(ALMStatus.LOADING);
+    onUpdate(ALMStatus.LOADING); // The requirements are passed here correctly.
     const result = await createAlmTicket(testCase, platform, jiraConfig, azureDevOpsConfig, polarionConfig, requirements);
 
     if (result.success && result.issueKey) {

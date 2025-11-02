@@ -1,5 +1,5 @@
 import React from 'react';
-import { type TestCase, ALMStatus, ALMPlatform } from '../types';
+import { type TestCase, type Requirement, ALMStatus, ALMPlatform } from '../types';
 import { createAlmTicket } from '../services/almService';
 import { CheckCircleIcon, XCircleIcon, SpinnerIcon } from './Icons';
 import { logAnalyticsEvent } from '../services/analyticsService';
@@ -7,18 +7,19 @@ import { logAnalyticsEvent } from '../services/analyticsService';
 interface AlmStatusCellProps {
   testCase: TestCase;
   platform: ALMPlatform;
+  requirements: Requirement[];
   onStatusUpdate: (testCaseId: string, status: ALMStatus, result?: { issueKey?: string; error?: string }) => void;
   jiraConfig?: { instanceUrl: string; userEmail: string; apiToken: string; projectKey: string };
   azureDevOpsConfig?: { organization: string; project: string; personalAccessToken: string; workItemType: string };
   polarionConfig?: { serverUrl: string; username: string; password: string; projectId: string };
 }
 
-export const AlmStatusCell: React.FC<AlmStatusCellProps> = ({ testCase, platform, onStatusUpdate, jiraConfig, azureDevOpsConfig, polarionConfig }) => {
+export const AlmStatusCell: React.FC<AlmStatusCellProps> = ({ testCase, platform, requirements, onStatusUpdate, jiraConfig, azureDevOpsConfig, polarionConfig }) => {
 
   const handleCreateTicket = async () => {
     logAnalyticsEvent('create_alm_ticket_attempt', { platform, test_case_id: testCase.id });
     onStatusUpdate(testCase.id, ALMStatus.LOADING);
-    const result = await createAlmTicket(testCase, platform, jiraConfig, azureDevOpsConfig, polarionConfig);
+    const result = await createAlmTicket(testCase, platform, jiraConfig, azureDevOpsConfig, polarionConfig, requirements);
 
     if (result.success && result.issueKey) {
       logAnalyticsEvent('create_alm_ticket_success', { platform, test_case_id: testCase.id, issue_key: result.issueKey });

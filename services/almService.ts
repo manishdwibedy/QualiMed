@@ -193,13 +193,23 @@ async function createJiraTicket(testCase: TestCase, requirements?: Requirement[]
 /**
  * [REAL IMPLEMENTATION] Creates a real test case work item in Polarion.
  */
-async function createPolarionWorkItemReal(testCase: TestCase, polarionConfig?: { serverUrl: string; username: string; password: string; projectId: string }): Promise<AlmResult> {
+async function createPolarionWorkItemReal(testCase: TestCase, requirements?: Requirement[], polarionConfig?: { serverUrl: string; username: string; password: string; projectId: string }): Promise<AlmResult> {
     const polarion = polarionConfig || almConfig.polarion;
     if (!polarion || polarion.serverUrl.includes('your-server') || polarion.username.includes('your-username') || polarion.password.includes('YOUR_PASSWORD')) {
         return {
             success: false,
             error: 'Polarion configuration is incomplete. Please fill in your credentials in the dashboard.'
         };
+    }
+
+    const requirement = requirements?.find(r => r.id === testCase.requirementId);
+    let description = `Original Requirement Context: ${testCase.requirement}`;
+
+    if (requirement) {
+        description += `\n\n---\n\n**Traceability**\n` +
+                       `* Requirement ID: ${requirement.id}\n` +
+                       `* Source: ${requirement.source}\n` +
+                       `* Compliance: ${requirement.compliance.join(', ')}`;
     }
 
     const endpoint = `${polarion.serverUrl}/polarion/rest/v1/projects/${polarion.projectId}/workitems`;
@@ -212,7 +222,7 @@ async function createPolarionWorkItemReal(testCase: TestCase, polarionConfig?: {
     const polarionPayload = {
         type: 'testcase',
         title: testCase.title,
-        description: testCase.requirement,
+        description: description,
         customFields: {
             'testSteps': testCase.steps.map(s => `${s.actor}: ${s.action}`).join('\n'),
             'expectedResult': testCase.expectedResult,
@@ -250,12 +260,12 @@ async function createPolarionWorkItemReal(testCase: TestCase, polarionConfig?: {
  * [SIMULATED IMPLEMENTATION] Simulates creating a new test case work item in Polarion.
  * This is the default behavior.
  */
-async function createPolarionWorkItemSimulated(testCase: TestCase): Promise<AlmResult> {
+async function createPolarionWorkItemSimulated(testCase: TestCase, requirements?: Requirement[]): Promise<AlmResult> {
     const projectId = almConfig.polarion?.projectId || 'PROJ';
     const polarionPayload = {
         type: 'testcase',
         title: testCase.title,
-        description: testCase.requirement,
+        description: `Simulated description for requirement: ${testCase.requirement}`,
         customFields: {
             'testSteps': testCase.steps.map(s => `${s.actor}: ${s.action}`).join('\n'),
             'expectedResult': testCase.expectedResult,
@@ -280,24 +290,43 @@ async function createPolarionWorkItemSimulated(testCase: TestCase): Promise<AlmR
  * Creates a new test case work item in Polarion.
  * Toggles between the real and simulated implementations.
  */
-async function createPolarionWorkItem(testCase: TestCase, polarionConfig?: { serverUrl: string; username: string; password: string; projectId: string }): Promise<AlmResult> {
+async function createPolarionWorkItem(testCase: TestCase, requirements?: Requirement[], polarionConfig?: { serverUrl: string; username: string; password: string; projectId: string }): Promise<AlmResult> {
   // --- TOGGLE BETWEEN REAL AND SIMULATED ---
   // To use the REAL Polarion API, comment out the line below:
-  return createPolarionWorkItemSimulated(testCase);
+  return createPolarionWorkItemSimulated(testCase, requirements);
 
   // And uncomment this line:
-  // return createPolarionWorkItemReal(testCase, polarionConfig);
+  // return createPolarionWorkItemReal(testCase, requirements, polarionConfig);
 }
 
 /**
  * [REAL IMPLEMENTATION] Creates a real test case work item in Azure DevOps.
  */
-async function createAzureDevOpsWorkItem(testCase: TestCase, azureDevOpsConfig?: { organization: string; project: string; personalAccessToken: string; workItemType: string }): Promise<AlmResult> {
+async function createAzureDevOpsWorkItem(testCase: TestCase, requirements?: Requirement[], azureDevOpsConfig?: { organization: string; project: string; personalAccessToken: string; workItemType: string }): Promise<AlmResult> {
+    let description = `Original Requirement Context: ${testCase.requirement}\n\n`;
+
+    const requirement = requirements?.find(r => r.id === testCase.requirementId);
+    if (requirement) {
+        description = `<h3>Traceability</h3>` +
+                      `<ul>` +
+                      `<li><b>Requirement ID:</b> ${requirement.id}</li>` +
+                      `<li><b>Source:</b> ${requirement.source}</li>` +
+                      `<li><b>Compliance:</b> ${requirement.compliance.join(', ')}</li>` +
+                      `</ul>` +
+                      `<hr>` +
+                      `<h3>Original Requirement Context</h3>` +
+                      `<p>${testCase.requirement}</p>`;
+    }
+
+    if (testCase.preConditions) {
+        description += `## Pre-Conditions\n${testCase.preConditions}\n\n`;
+    }
+
     const azureDevOps = azureDevOpsConfig || almConfig.azureDevOps;
     if (!azureDevOps || azureDevOps.organization.includes('your-organization') || azureDevOps.project.includes('your-project') || azureDevOps.personalAccessToken.includes('YOUR_PAT')) {
         return {
             success: false,
-            error: 'Azure DevOps configuration is incomplete. Please fill in your Azure DevOps credentials in the dashboard.'
+            error: 'Azure DevOps configuration is incomplete. Please fill in your credentials in the dashboard.'
         };
     }
 
@@ -310,7 +339,7 @@ async function createAzureDevOpsWorkItem(testCase: TestCase, azureDevOpsConfig?:
 
     const adoPayload = [
         { "op": "add", "path": "/fields/System.Title", "value": testCase.title },
-        { "op": "add", "path": "/fields/System.Description", "value": testCase.requirement },
+        { "op": "add", "path": "/fields/System.Description", "value": description },
         { "op": "add", "path": "/fields/Microsoft.VSTS.TCM.Steps", "value": testCase.steps.map(s => `<step>${s.actor}: ${s.action}</step>`).join('') },
         { "op": "add", "path": "/fields/Microsoft.VSTS.TCM.ExpectedResult", "value": testCase.expectedResult },
         { "op": "add", "path": "/fields/Microsoft.VSTS.Common.Priority", "value": 2 },
@@ -328,7 +357,7 @@ async function createAzureDevOpsWorkItem(testCase: TestCase, azureDevOpsConfig?:
     try {
         console.log(`[REAL][${ALMPlatform.AZURE_DEVOPS}] Sending Payload:`, JSON.stringify(adoPayload, null, 2));
         const response = await fetch(endpoint, {
-            method: 'POST',
+            method: 'PATCH', // Azure DevOps uses PATCH for creating work items with this API structure
             headers: headers,
             body: JSON.stringify(adoPayload),
         });
@@ -366,9 +395,9 @@ export async function createAlmTicket(testCase: TestCase, platform: ALMPlatform,
     case ALMPlatform.JIRA:
       return createJiraTicket(testCase, requirements, jiraConfig);
     case ALMPlatform.POLARION:
-        return createPolarionWorkItem(testCase, polarionConfig);
+        return createPolarionWorkItem(testCase, requirements, polarionConfig);
     case ALMPlatform.AZURE_DEVOPS:
-        return createAzureDevOpsWorkItem(testCase, azureDevOpsConfig);
+        return createAzureDevOpsWorkItem(testCase, requirements, azureDevOpsConfig);
     default:
       console.error(`Unknown ALM platform: ${platform}`);
       return { success: false, error: `ALM platform "${platform}" is not supported.` };

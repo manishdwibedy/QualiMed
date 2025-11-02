@@ -276,7 +276,7 @@ export const TestCaseDisplay: React.FC<TestCaseDisplayProps> = ({
                             </span>
                           </td>
                           <td className="p-3">
-                            <AlmStatusCell testCase={testCase} platform={almPlatform} onStatusUpdate={onAlmStatusUpdate} jiraConfig={jiraConfig} azureDevOpsConfig={azureDevOpsConfig} polarionConfig={polarionConfig} />
+                            <AlmStatusCell testCase={testCase} requirements={requirements} platform={almPlatform} onStatusUpdate={onAlmStatusUpdate} jiraConfig={jiraConfig} azureDevOpsConfig={azureDevOpsConfig} polarionConfig={polarionConfig} />
                           </td>
                         </tr>
                         {isExpanded && (
