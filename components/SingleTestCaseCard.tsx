@@ -249,6 +249,7 @@ export const SingleTestCaseCard: React.FC<SingleTestCaseCardProps> = ({ testCase
 
         <AlmIntegration
           testCase={testCase}
+          requirements={requirements}
           platform={almPlatform}
           onUpdate={handleUpdate}
           jiraConfig={jiraConfig}

@@ -2,22 +2,23 @@
 
 import React from 'react';
 // Fix: Use ALMStatus instead of the non-existent JiraStatus.
-import { type TestCase, ALMStatus } from '../types';
+import { type TestCase, type Requirement, ALMStatus } from '../types';
 import { createJiraTicket } from '../services/jiraService';
 import { CheckCircleIcon, XCircleIcon } from './Icons';
 
 interface JiraIntegrationProps {
   testCase: TestCase;
+  requirements: Requirement[];
   // Fix: Use ALMStatus in the onUpdate prop signature.
   onUpdate: (status: ALMStatus, result?: { issueKey?: string; error?: string }) => void;
 }
 
-export const JiraIntegration: React.FC<JiraIntegrationProps> = ({ testCase, onUpdate }) => {
+export const JiraIntegration: React.FC<JiraIntegrationProps> = ({ testCase, requirements, onUpdate }) => {
   
   const handleCreateTicket = async () => {
     // Fix: Use ALMStatus enum members.
     onUpdate(ALMStatus.LOADING);
-    const result = await createJiraTicket(testCase);
+    const result = await createJiraTicket(testCase, requirements);
 
     if (result.success && result.issueKey) {
       // Fix: Use ALMStatus enum members.

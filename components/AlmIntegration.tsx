@@ -1,10 +1,11 @@
 import React from 'react';
-import { type TestCase, ALMStatus, ALMPlatform } from '../types';
+import { type TestCase, type Requirement, ALMStatus, ALMPlatform } from '../types';
 import { createAlmTicket } from '../services/almService';
 import { CheckCircleIcon, XCircleIcon } from './Icons';
 
 interface AlmIntegrationProps {
   testCase: TestCase;
+  requirements: Requirement[];
   platform: ALMPlatform;
   onUpdate: (status: ALMStatus, result?: { issueKey?: string; error?: string }) => void;
   jiraConfig?: { instanceUrl: string; userEmail: string; apiToken: string; projectKey: string };
@@ -12,11 +13,11 @@ interface AlmIntegrationProps {
   polarionConfig?: { serverUrl: string; username: string; password: string; projectId: string };
 }
 
-export const AlmIntegration: React.FC<AlmIntegrationProps> = ({ testCase, platform, onUpdate, jiraConfig, azureDevOpsConfig, polarionConfig }) => {
+export const AlmIntegration: React.FC<AlmIntegrationProps> = ({ testCase, requirements, platform, onUpdate, jiraConfig, azureDevOpsConfig, polarionConfig }) => {
 
   const handleCreateTicket = async () => {
     onUpdate(ALMStatus.LOADING);
-    const result = await createAlmTicket(testCase, platform, jiraConfig, azureDevOpsConfig, polarionConfig);
+    const result = await createAlmTicket(testCase, requirements, platform, jiraConfig, azureDevOpsConfig, polarionConfig);
 
     if (result.success && result.issueKey) {
       onUpdate(ALMStatus.SUCCESS, { issueKey: result.issueKey });

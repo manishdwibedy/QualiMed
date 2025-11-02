@@ -1,4 +1,4 @@
-import { type TestCase, ALMPlatform } from '../types';
+import { type TestCase, type Requirement, ALMPlatform } from '../types';
 // This service attempts to import credentials from `config.ts`.
 // If this file does not exist, you will see a build error.
 // Please follow the instructions in INSTALLATION.md to create this file.
@@ -16,13 +16,24 @@ interface AlmResult {
  * @param testCase The test case to format.
  * @returns The ADF content array.
  */
-function buildJiraDescription(testCase: TestCase) {
+function buildJiraDescription(testCase: TestCase, requirements: Requirement[]) {
+  const requirement = requirements.find(r => r.id === testCase.requirementId);
+
   const content: any[] = [
     {
       type: 'paragraph',
       content: [ { type: 'text', text: 'Original Requirement Context: ' + testCase.requirement } ],
     },
   ];
+
+  if (requirement) {
+    content.unshift(
+      { type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: 'Traceability' }] },
+      { type: 'paragraph', content: [ { type: 'text', text: `Requirement ID: ${requirement.id}` } ] },
+      { type: 'paragraph', content: [ { type: 'text', text: `Source: ${requirement.source}` } ] },
+      { type: 'paragraph', content: [ { type: 'text', text: `Compliance: ${requirement.compliance.join(', ')}` } ] },
+    );
+  }
 
   if (testCase.preConditions) {
     content.push(
@@ -54,9 +65,15 @@ function buildJiraDescription(testCase: TestCase) {
 /**
  * [REAL IMPLEMENTATION] Creates a real test case issue in Jira via backend API to avoid CORS.
  */
-async function createJiraTicketReal(testCase: TestCase, jiraConfig?: { instanceUrl: string; userEmail: string; apiToken: string; projectKey: string }): Promise<AlmResult> {
+async function createJiraTicketReal(testCase: TestCase, requirements: Requirement[], jiraConfig?: { instanceUrl: string; userEmail: string; apiToken: string; projectKey: string }): Promise<AlmResult> {
+    const requirement = requirements.find(r => r.id === testCase.requirementId);
+
     // Build description as a string for backend
     let description = `Original Requirement Context: ${testCase.requirement}\n\n`;
+
+    if (requirement) {
+        description = `*Traceability*\n*Requirement ID:* ${requirement.id}\n*Source:* ${requirement.source}\n*Compliance:* ${requirement.compliance.join(', ')}\n\n${description}`;
+    }
 
     if (testCase.preConditions) {
         description += `## Pre-Conditions\n${testCase.preConditions}\n\n`;
@@ -124,7 +141,7 @@ async function createJiraTicketReal(testCase: TestCase, jiraConfig?: { instanceU
  * [SIMULATED IMPLEMENTATION] Simulates creating a new test case issue in Jira.
  * This is the default behavior.
  */
-async function createJiraTicketSimulated(testCase: TestCase): Promise<AlmResult> {
+async function createJiraTicketSimulated(testCase: TestCase, requirements: Requirement[]): Promise<AlmResult> {
     const projectKey = almConfig.jira?.projectKey || 'PROJ';
     const jiraPayload = {
       fields: {
@@ -133,7 +150,7 @@ async function createJiraTicketSimulated(testCase: TestCase): Promise<AlmResult>
         description: {
           type: 'doc',
           version: 1,
-          content: buildJiraDescription(testCase),
+          content: buildJiraDescription(testCase, requirements),
         },
         issuetype: { name: 'Test Case' },
       },
@@ -155,13 +172,13 @@ async function createJiraTicketSimulated(testCase: TestCase): Promise<AlmResult>
  * Creates a new test case issue in Jira.
  * Toggles between the real and simulated implementations.
  */
-async function createJiraTicket(testCase: TestCase, jiraConfig?: { instanceUrl: string; userEmail: string; apiToken: string; projectKey: string }): Promise<AlmResult> {
+async function createJiraTicket(testCase: TestCase, requirements: Requirement[], jiraConfig?: { instanceUrl: string; userEmail: string; apiToken: string; projectKey: string }): Promise<AlmResult> {
   // --- TOGGLE BETWEEN REAL AND SIMULATED ---
   // To use the REAL Jira API, comment out the line below:
-  // return createJiraTicketSimulated(testCase);
+  return createJiraTicketSimulated(testCase, requirements);
 
   // And uncomment this line:
-  return createJiraTicketReal(testCase, jiraConfig);
+  // return createJiraTicketReal(testCase, requirements, jiraConfig);
 }
 
 /**
@@ -333,12 +350,12 @@ async function createAzureDevOpsWorkItem(testCase: TestCase, azureDevOpsConfig?:
  * @param polarionConfig Optional Polarion configuration for dynamic credentials.
  * @returns A promise that resolves with the result of the operation.
  */
-export async function createAlmTicket(testCase: TestCase, platform: ALMPlatform, jiraConfig?: { instanceUrl: string; userEmail: string; apiToken: string; projectKey: string }, azureDevOpsConfig?: { organization: string; project: string; personalAccessToken: string; workItemType: string }, polarionConfig?: { serverUrl: string; username: string; password: string; projectId: string }): Promise<AlmResult> {
+export async function createAlmTicket(testCase: TestCase, requirements: Requirement[], platform: ALMPlatform, jiraConfig?: { instanceUrl: string; userEmail: string; apiToken: string; projectKey: string }, azureDevOpsConfig?: { organization: string; project: string; personalAccessToken: string; workItemType: string }, polarionConfig?: { serverUrl: string; username: string; password: string; projectId: string }): Promise<AlmResult> {
   console.log(`Attempting ticket creation for ${platform}...`);
 
   switch (platform) {
     case ALMPlatform.JIRA:
-      return createJiraTicket(testCase, jiraConfig);
+      return createJiraTicket(testCase, requirements, jiraConfig);
     case ALMPlatform.POLARION:
         return createPolarionWorkItem(testCase, polarionConfig);
     case ALMPlatform.AZURE_DEVOPS:
