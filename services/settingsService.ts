@@ -104,7 +104,8 @@ export const loadApiSettings = async (): Promise<ApiSettings> => {
   const docSnap = await getDoc(docRef);
 
   if (docSnap.exists()) {
-    return docSnap.data().apiSettings || DEFAULT_API_SETTINGS;
+    const savedSettings = docSnap.data().apiSettings;
+    return savedSettings ? { ...DEFAULT_API_SETTINGS, ...savedSettings } : DEFAULT_API_SETTINGS;
   } else {
     return DEFAULT_API_SETTINGS;
   }
