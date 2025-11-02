@@ -1,120 +1,67 @@
 
 import { type TestCase } from '../types';
+import { base_url } from '../config';
 
 /**
- * Simulates creating a new test case issue in a Jira-like system.
- * In a real application, this would make an authenticated API request.
+ * Creates a new test case issue in Jira by calling the backend API.
  * @param testCase - The test case data to be sent.
  * @returns A promise that resolves with the result of the operation.
  */
 export async function createJiraTicket(testCase: TestCase): Promise<{ success: boolean; issueKey?: string; error?: string }> {
-  console.log('Simulating Jira ticket creation...');
-  
-  const descriptionContent: any[] = [
-    {
-      type: 'paragraph',
-      content: [
-        {
-          type: 'text',
-          text: 'Original Requirement Context: ' + testCase.requirement,
-        },
-      ],
-    },
-  ];
+  console.log('Creating Jira ticket via backend...');
+
+  // Build description as a string
+  let description = `Original Requirement Context: ${testCase.requirement}\n\n`;
 
   if (testCase.preConditions) {
-    descriptionContent.push(
-      {
-        type: 'heading',
-        attrs: { level: 2 },
-        content: [{ type: 'text', text: 'Pre-Conditions' }],
-      },
-      {
-        type: 'paragraph',
-        content: [{ type: 'text', text: testCase.preConditions }],
-      }
-    );
+    description += `## Pre-Conditions\n${testCase.preConditions}\n\n`;
   }
-  
-  descriptionContent.push(
-    {
-      type: 'heading',
-      attrs: { level: 2 },
-      content: [{ type: 'text', text: 'Test Steps' }],
-    },
-    {
-      type: 'orderedList',
-      content: testCase.steps.map(step => ({
-        type: 'listItem',
-        content: [
-          {
-            type: 'paragraph',
-            content: [
-              { type: 'text', text: `As ${step.actor}, ${step.action}.` },
-            ],
-          },
-        ],
-      })),
-    }
-  );
-  
+
+  description += `## Test Steps\n`;
+  testCase.steps.forEach((step, index) => {
+    description += `${index + 1}. As ${step.actor}, ${step.action}.\n`;
+  });
+  description += '\n';
+
   if (testCase.testData) {
-    descriptionContent.push(
-      {
-        type: 'heading',
-        attrs: { level: 2 },
-        content: [{ type: 'text', text: 'Test Data' }],
-      },
-      {
-        type: 'paragraph',
-        content: [{ type: 'text', text: testCase.testData }],
-      }
-    );
+    description += `## Test Data\n${testCase.testData}\n\n`;
   }
 
-  descriptionContent.push(
-    {
-      type: 'heading',
-      attrs: { level: 2 },
-      content: [{ type: 'text', text: 'Expected Result' }],
-    },
-    {
-      type: 'paragraph',
-      content: [{ type: 'text', text: testCase.expectedResult }],
-    }
-  );
+  description += `## Expected Result\n${testCase.expectedResult}`;
 
-
-  // This is the payload you would send to the Jira API
-  const jiraPayload = {
-    fields: {
-      project: {
-        key: 'HTP', // Example Project Key
-      },
-      summary: testCase.title,
-      description: {
-        type: 'doc',
-        version: 1,
-        content: descriptionContent,
-      },
-      issuetype: {
-        name: 'Test Case', // Or 'Test', depending on your Jira configuration
-      },
-    },
+  // Payload for backend
+  const payload = {
+    summary: testCase.title,
+    description: description,
+    projectKey: 'HTP', // Example Project Key, can be made configurable
+    issuetype: 'Test Case'
   };
 
-  console.log('Jira API Payload:', JSON.stringify(jiraPayload, null, 2));
+  console.log('Backend Payload:', JSON.stringify(payload, null, 2));
 
-  // Simulate network delay
-  await new Promise(resolve => setTimeout(resolve, 1500));
+  try {
+    const response = await fetch(`${base_url}/create/jira`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
 
-  // Simulate a random success or failure for demonstration purposes
-  if (Math.random() > 0.2) { // 80% success rate
-    const issueKey = `HTP-${Math.floor(Math.random() * 1000) + 1}`;
-    console.log(`Successfully created Jira ticket: ${issueKey}`);
-    return { success: true, issueKey };
-  } else {
-    console.error('Failed to create Jira ticket (simulated error).');
-    return { success: false, error: 'Failed to connect to Jira API (simulated).' };
+    const data = await response.json();
+    console.log('Backend Response:', data);
+
+    if (response.ok && data.status_code === 201 && data.response && data.response.key) {
+      const issueKey = data.response.key;
+      console.log(`Successfully created Jira ticket: ${issueKey}`);
+      return { success: true, issueKey };
+    } else {
+      const error = data.response?.errorMessages?.join(', ') || data.response?.errors?.join(', ') || 'Failed to create Jira ticket';
+      console.error('Failed to create Jira ticket:', error);
+      return { success: false, error };
+    }
+  } catch (error) {
+    console.error('Error calling backend:', error);
+    return { success: false, error: 'Failed to connect to backend API.' };
   }
 }

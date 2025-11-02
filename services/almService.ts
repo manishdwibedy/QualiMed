@@ -2,7 +2,7 @@ import { type TestCase, ALMPlatform } from '../types';
 // This service attempts to import credentials from `config.ts`.
 // If this file does not exist, you will see a build error.
 // Please follow the instructions in INSTALLATION.md to create this file.
-import { almConfig } from '../config';
+import { almConfig, base_url } from '../config';
 
 interface AlmResult {
   success: boolean;
@@ -51,59 +51,62 @@ function buildJiraDescription(testCase: TestCase) {
 }
 
 /**
- * [REAL IMPLEMENTATION] Creates a real test case issue in Jira.
+ * [REAL IMPLEMENTATION] Creates a real test case issue in Jira via backend API to avoid CORS.
  */
 async function createJiraTicketReal(testCase: TestCase, jiraConfig?: { instanceUrl: string; userEmail: string; apiToken: string; projectKey: string }): Promise<AlmResult> {
-    const jira = jiraConfig || almConfig.jira;
-    if (!jira || !jira.instanceUrl || !jira.userEmail || !jira.apiToken || !jira.projectKey ||
-        jira.instanceUrl.includes('your-instance') || jira.apiToken.includes('YOUR_JIRA_API_TOKEN')) {
-        return {
-            success: false,
-            error: 'Jira configuration is incomplete. Please fill in your Jira credentials in the dashboard.'
-        };
+    // Build description as a string for backend
+    let description = `Original Requirement Context: ${testCase.requirement}\n\n`;
+
+    if (testCase.preConditions) {
+        description += `## Pre-Conditions\n${testCase.preConditions}\n\n`;
     }
 
-    const endpoint = `${jira.instanceUrl}/rest/api/3/issue`;
-    const headers = {
-        'Authorization': `Basic ${btoa(`${jira.userEmail}:${jira.apiToken}`)}`,
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
+    description += `## Test Steps\n`;
+    testCase.steps.forEach((step, index) => {
+        description += `${index + 1}. As ${step.actor}, ${step.action}.\n`;
+    });
+    description += '\n';
+
+    if (testCase.testData) {
+        description += `## Test Data\n${testCase.testData}\n\n`;
+    }
+
+    description += `## Expected Result\n${testCase.expectedResult}`;
+
+    // Payload for backend
+    const payload = {
+        summary: testCase.title,
+        description: description,
+        projectKey: jiraConfig?.projectKey || almConfig.jira?.projectKey || 'HTP',
+        issuetype: 'Test Case'
     };
 
-    const jiraPayload = {
-      fields: {
-        project: { key: jira.projectKey },
-        summary: testCase.title,
-        description: {
-          type: 'doc',
-          version: 1,
-          content: buildJiraDescription(testCase),
-        },
-        issuetype: { name: 'Test Case' }, // Ensure 'Test Case' is a valid issue type in your project
-      },
-    };
+    console.log(`[REAL][${ALMPlatform.JIRA}] Backend Payload:`, JSON.stringify(payload, null, 2));
 
     try {
-        console.log(`[REAL][${ALMPlatform.JIRA}] Sending Payload:`, JSON.stringify(jiraPayload, null, 2));
-        const response = await fetch(endpoint, {
+        const response = await fetch(`${base_url}/create/jira`, {
             method: 'POST',
-            headers: headers,
-            body: JSON.stringify(jiraPayload),
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
         });
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            console.error('Jira API Error:', errorData);
-            const errorMessage = errorData.errorMessages?.join(', ') || `HTTP error! status: ${response.status}`;
-            return { success: false, error: errorMessage };
+        const data = await response.json();
+        console.log('Backend Response:', data);
+
+        if (response.ok && data.status_code === 201 && data.response && data.response.key) {
+            const issueKey = data.response.key;
+            console.log(`Successfully created Jira ticket: ${issueKey}`);
+            return { success: true, issueKey };
+        } else {
+            const error = data.response?.errorMessages?.join(', ') || data.response?.errors?.join(', ') || 'Failed to create Jira ticket';
+            console.error('Failed to create Jira ticket:', error);
+            return { success: false, error };
         }
-
-        const responseData = await response.json();
-        return { success: true, issueKey: responseData.key };
-
     } catch (error) {
-        console.error('Network or other error during Jira ticket creation:', error);
-        return { success: false, error: error instanceof Error ? error.message : 'An unknown network error occurred.' };
+        console.error('Error calling backend:', error);
+        return { success: false, error: 'Failed to connect to backend API.' };
     }
 }
 
@@ -146,10 +149,10 @@ async function createJiraTicketSimulated(testCase: TestCase): Promise<AlmResult>
 async function createJiraTicket(testCase: TestCase, jiraConfig?: { instanceUrl: string; userEmail: string; apiToken: string; projectKey: string }): Promise<AlmResult> {
   // --- TOGGLE BETWEEN REAL AND SIMULATED ---
   // To use the REAL Jira API, comment out the line below:
-  return createJiraTicketSimulated(testCase);
+  // return createJiraTicketSimulated(testCase);
 
   // And uncomment this line:
-  // return createJiraTicketReal(testCase, jiraConfig);
+  return createJiraTicketReal(testCase, jiraConfig);
 }
 
 /**
