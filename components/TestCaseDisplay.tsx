@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { type TestCase, ALMStatus, ALMPlatform, DefaultTestCaseCategory } from '../types';
+import { type TestCase, type Requirement, ALMStatus, ALMPlatform, DefaultTestCaseCategory } from '../types';
 import { SingleTestCaseCard } from './SingleTestCaseCard';
 import { DocumentArrowDownIcon } from './Icons';
 import jsPDF from 'jspdf';
@@ -9,6 +9,7 @@ import { logAnalyticsEvent } from '../services/analyticsService';
 
 interface TestCaseDisplayProps {
   testCases: TestCase[];
+  requirements: Requirement[];
   onAlmStatusUpdate: (testCaseId: string, status: ALMStatus, result?: { issueKey?: string, error?: string }) => void;
   onTestCaseUpdate: (testCase: TestCase) => void;
   onExportJson: () => void;
@@ -44,6 +45,7 @@ const genericCategoryStyle = {
 
 export const TestCaseDisplay: React.FC<TestCaseDisplayProps> = ({
     testCases,
+    requirements,
     onAlmStatusUpdate,
     onTestCaseUpdate,
     onExportJson,
@@ -282,6 +284,7 @@ export const TestCaseDisplay: React.FC<TestCaseDisplayProps> = ({
                               <div className="p-4">
                                 <SingleTestCaseCard
                                   testCase={testCase}
+                                  requirements={requirements}
                                   onAlmStatusUpdate={onAlmStatusUpdate}
                                   onTestCaseUpdate={onTestCaseUpdate}
                                   almPlatform={almPlatform}

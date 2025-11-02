@@ -1,8 +1,9 @@
 import React, { useState, useCallback, useEffect } from 'react';
+import { RequirementManagement } from './components/RequirementManagement';
 import { RequirementInput } from './components/RequirementInput';
 import { TestCaseDisplay } from './components/TestCaseDisplay';
 import { Loader } from './components/Loader';
-import { type TestCase, ALMStatus, ALMPlatform, type BatchFileStatus, type GenerationConfig, ModelProvider, type ModelConfig, DefaultTestCaseCategory } from './types';
+import { type TestCase, type Requirement, ALMStatus, ALMPlatform, type BatchFileStatus, type GenerationConfig, ModelProvider, type ModelConfig, DefaultTestCaseCategory } from './types';
 import { generateTestCaseFromRequirement } from './services/geminiService';
 import { FileIcon, FolderPlusIcon } from './components/Icons';
 import * as pdfjs from 'pdfjs-dist';
@@ -59,6 +60,8 @@ const AppContent: React.FC = () => {
     loadSettings();
   }, []);
   const [requirement, setRequirement] = useState<string>('The system shall allow a user to log in with a valid username and password. Upon successful authentication, the user should be redirected to their dashboard.');
+  const [requirements, setRequirements] = useState<Requirement[]>([]);
+  const [selectedRequirement, setSelectedRequirement] = useState<Requirement | null>(null);
   const [testCases, setTestCases] = useState<TestCase[] | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -140,14 +143,16 @@ const AppContent: React.FC = () => {
   };
 
   const handleStartBatchGeneration = useCallback(async () => {
-    if (!requirement.trim() && files.length === 0) {
+    const requirementToUse = selectedRequirement ? selectedRequirement.text : requirement;
+    if (!requirementToUse.trim() && files.length === 0) {
       setError('A requirement description or at least one document is required.');
       return;
     }
     logAnalyticsEvent('generate_test_cases_start', {
-      has_requirement: !!requirement.trim(),
+      has_requirement: !!requirementToUse.trim(),
       file_count: files.length,
-      model_provider: modelConfig.provider
+      model_provider: modelConfig.provider,
+      has_selected_requirement: !!selectedRequirement,
     });
     setIsLoading(true);
     setError(null);
@@ -193,12 +198,13 @@ const AppContent: React.FC = () => {
       setBatchStatus(prev => prev.map(s => s.name === file.name ? { ...s, status: 'processing' } : s));
       try {
         const documentText = await parseFile(file);
-        const generatedData = await generateTestCaseFromRequirement(requirement, documentText, effectiveGenerationConfig, effectiveModelConfig);
+        const generatedData = await generateTestCaseFromRequirement(requirementToUse, documentText, effectiveGenerationConfig, effectiveModelConfig);
         
         const newTestCases: TestCase[] = generatedData.map((data) => ({
           id: `TC-${crypto.randomUUID()}`,
           title: data.title,
-          requirement: requirement,
+          requirement: requirementToUse,
+          requirementId: selectedRequirement?.id,
           category: data.category,
           steps: [{ step: 1, actor: data.actor, action: data.action }],
           expectedResult: data.expectedOutcome,
@@ -221,11 +227,12 @@ const AppContent: React.FC = () => {
         const name = 'Text Input';
         setBatchStatus(prev => prev.map(s => s.name === name ? { ...s, status: 'processing' } : s));
         try {
-            const generatedData = await generateTestCaseFromRequirement(requirement, null, effectiveGenerationConfig, effectiveModelConfig);
+            const generatedData = await generateTestCaseFromRequirement(requirementToUse, null, effectiveGenerationConfig, effectiveModelConfig);
             const newTestCases: TestCase[] = generatedData.map((data) => ({
                 id: `TC-${crypto.randomUUID()}`,
                 title: data.title,
-                requirement: requirement,
+                requirement: requirementToUse,
+                requirementId: selectedRequirement?.id,
                 category: data.category,
                 steps: [{ step: 1, actor: data.actor, action: data.action }],
                 expectedResult: data.expectedOutcome,
@@ -252,7 +259,7 @@ const AppContent: React.FC = () => {
       file_count: files.length,
       has_errors: batchStatus.some(s => s.status === 'error')
     });
-  }, [requirement, files, generationConfig, modelConfig]);
+  }, [requirement, files, generationConfig, modelConfig, selectedRequirement]);
   
   const handleAlmStatusUpdate = (testCaseId: string, status: ALMStatus, result?: { issueKey?: string, error?: string }) => {
     setTestCases(prevTestCases => {
@@ -366,6 +373,7 @@ ${tc.expectedResult}
         </header>
 
         <main className="space-y-8">
+          <RequirementManagement requirements={requirements} setRequirements={setRequirements} />
           <RequirementInput
             requirement={requirement}
             setRequirement={handleRequirementChange}
@@ -378,6 +386,9 @@ ${tc.expectedResult}
             modelConfig={modelConfig}
             onModelConfigChange={setModelConfig}
             apiSettings={apiSettings}
+            requirements={requirements}
+            selectedRequirement={selectedRequirement}
+            setSelectedRequirement={setSelectedRequirement}
           />
           
           {batchStatus.length > 0 && <BatchStatusDisplay status={batchStatus} isProcessing={isLoading} />}
@@ -392,6 +403,7 @@ ${tc.expectedResult}
           {testCases && !isLoading && (
             <TestCaseDisplay
               testCases={testCases}
+              requirements={requirements}
               onAlmStatusUpdate={handleAlmStatusUpdate}
               onTestCaseUpdate={handleTestCaseUpdate}
               onExportJson={handleExportJson}

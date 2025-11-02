@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { type TestCase, DefaultTestCaseCategory, ALMStatus, ALMPlatform } from '../types';
+import { type TestCase, type Requirement, DefaultTestCaseCategory, ALMStatus, ALMPlatform } from '../types';
 import { AlmIntegration } from './AlmIntegration';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { JsonRenderer } from './JsonRenderer';
@@ -7,6 +7,7 @@ import { PencilIcon, ClipboardDocumentIcon, CheckIcon } from './Icons';
 
 interface SingleTestCaseCardProps {
   testCase: TestCase;
+  requirements: Requirement[];
   onAlmStatusUpdate: (testCaseId: string, status: ALMStatus, result?: { issueKey?: string, error?: string }) => void;
   onTestCaseUpdate: (testCase: TestCase) => void;
   almPlatform: ALMPlatform;
@@ -95,10 +96,12 @@ const EditableField: React.FC<{ label: string; value: string; onChange: (value: 
 };
 
 
-export const SingleTestCaseCard: React.FC<SingleTestCaseCardProps> = ({ testCase, onAlmStatusUpdate, onTestCaseUpdate, almPlatform, jiraConfig, azureDevOpsConfig, polarionConfig }) => {
+export const SingleTestCaseCard: React.FC<SingleTestCaseCardProps> = ({ testCase, requirements, onAlmStatusUpdate, onTestCaseUpdate, almPlatform, jiraConfig, azureDevOpsConfig, polarionConfig }) => {
   const styles = categoryStyles[testCase.category] || genericCategoryStyle;
   const [isEditing, setIsEditing] = useState(false);
   const [editedTestCase, setEditedTestCase] = useState<TestCase>(testCase);
+
+  const requirement = requirements.find(r => r.id === testCase.requirementId);
 
   useEffect(() => {
     setEditedTestCase(testCase);
@@ -183,6 +186,20 @@ export const SingleTestCaseCard: React.FC<SingleTestCaseCardProps> = ({ testCase
         </header>
 
         <div className="space-y-4 border-t border-slate-200 dark:border-slate-700 pt-4">
+
+          {requirement && (
+            <Section title="Traceability">
+              <div className="p-3 rounded-md bg-slate-100 dark:bg-slate-700/50">
+                <p className="font-semibold">Requirement ID: {requirement.id}</p>
+                <p className="text-sm text-gray-600">Source: {requirement.source}</p>
+                {requirement.compliance.length > 0 && (
+                  <p className="text-sm text-gray-600">
+                    Compliance: {requirement.compliance.join(', ')}
+                  </p>
+                )}
+              </div>
+            </Section>
+          )}
 
           {testCase.preConditions && (
              <Section title="Pre-Conditions" copyContent={testCase.preConditions}>

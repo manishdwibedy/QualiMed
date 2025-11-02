@@ -12,10 +12,26 @@ export enum ALMPlatform {
   AZURE_DEVOPS = 'Azure DevOps',
 }
 
+export enum ComplianceStandard {
+  FDA = 'FDA',
+  IEC_62304 = 'IEC 62304',
+  ISO_9001 = 'ISO 9001',
+  ISO_13485 = 'ISO 13485',
+  ISO_27001 = 'ISO 27001',
+}
+
+export interface Requirement {
+  id: string;
+  text: string;
+  source: string;
+  compliance: ComplianceStandard[];
+}
+
 export interface TestCase {
   id: string;
   title: string;
   requirement: string;
+  requirementId?: string;
   category: TestCaseCategory;
   steps: TestStep[];
   expectedResult: string;

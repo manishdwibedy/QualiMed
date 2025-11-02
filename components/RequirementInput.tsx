@@ -1,7 +1,7 @@
 import React, { useCallback, useState, useEffect } from 'react';
 import { useDropzone, FileRejection } from 'react-dropzone';
 import { FileIcon, UploadCloudIcon, XIcon, XCircleIcon, SettingsIcon, ServerIcon, KeyIcon } from './Icons';
-import { type GenerationConfig, type ModelConfig, ModelProvider, type ApiSettings } from '../types';
+import { type TestCase, type Requirement, ALMStatus, ALMPlatform, type BatchFileStatus, type GenerationConfig, ModelProvider, type ModelConfig, DefaultTestCaseCategory } from './types';
 import { logAnalyticsEvent } from '../services/analyticsService';
 
 interface RequirementInputProps {
@@ -16,6 +16,9 @@ interface RequirementInputProps {
   modelConfig: ModelConfig;
   onModelConfigChange: (config: ModelConfig) => void;
   apiSettings: ApiSettings;
+  requirements: Requirement[];
+  selectedRequirement: Requirement | null;
+  setSelectedRequirement: (req: Requirement | null) => void;
 }
 
 const SliderControl: React.FC<{
@@ -57,6 +60,9 @@ export const RequirementInput: React.FC<RequirementInputProps> = ({
   modelConfig,
   onModelConfigChange,
   apiSettings,
+  requirements,
+  selectedRequirement,
+  setSelectedRequirement,
 }) => {
   const [rejectedFiles, setRejectedFiles] = useState<FileRejection[]>([]);
   const [newCategory, setNewCategory] = useState('');
@@ -135,6 +141,28 @@ export const RequirementInput: React.FC<RequirementInputProps> = ({
 
   return (
     <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 space-y-4">
+      <div>
+        <label htmlFor="requirement-select" className="block text-lg font-semibold mb-2 text-slate-700 dark:text-slate-300">
+          Select a Requirement
+        </label>
+        <select
+          id="requirement-select"
+          value={selectedRequirement?.id || ''}
+          onChange={(e) => {
+            const selectedReq = requirements.find(r => r.id === e.target.value) || null;
+            setSelectedRequirement(selectedReq);
+          }}
+          className="w-full p-3 bg-slate-100 dark:bg-slate-700 border-2 border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition duration-200"
+          disabled={isDisabled}
+        >
+          <option value="">-- Select a requirement --</option>
+          {requirements.map(req => (
+            <option key={req.id} value={req.id}>
+              {req.id}: {req.text}
+            </option>
+          ))}
+        </select>
+      </div>
       <div>
         <label htmlFor="requirement-input" className="block text-lg font-semibold mb-2 text-slate-700 dark:text-slate-300">
           Requirement Context / Prompt (Applies to all documents)
