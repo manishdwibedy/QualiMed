@@ -4,7 +4,7 @@ import { XIcon } from './Icons';
 import { JiraConfig } from './JiraConfig';
 import { AzureDevOpsConfig } from './AzureDevOpsConfig';
 import { PolarionConfig } from './PolarionConfig';
-import { loadAlmSettings, saveAlmSettings, AlmSettings } from '../services/settingsService';
+import { loadAlmSettings, saveAlmSettings, AlmSettings, loadApiSettings, saveApiSettings, ApiSettings } from '../services/settingsService';
 import { base_url } from '../config';
 
 interface SettingsModalProps {
@@ -20,6 +20,11 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
     azureDevOps: { organization: '', project: '', personalAccessToken: '', workItemType: 'Test Case' },
     polarion: { serverUrl: '', username: '', password: '', projectId: '' },
   });
+  const [apiSettings, setApiSettings] = useState<ApiSettings>({
+    geminiApiKey: '',
+    ollamaUrl: '',
+    ollamaModel: '',
+  });
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -30,10 +35,14 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
 
   const loadSettings = async () => {
     try {
-      const settings = await loadAlmSettings();
-      setAlmSettings(settings);
+      const [almSettingsData, apiSettingsData] = await Promise.all([
+        loadAlmSettings(),
+        loadApiSettings(),
+      ]);
+      setAlmSettings(almSettingsData);
+      setApiSettings(apiSettingsData);
     } catch (error) {
-      console.error('Failed to load ALM settings:', error);
+      console.error('Failed to load settings:', error);
     }
   };
 
@@ -41,10 +50,13 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
     setIsLoading(true);
     try {
       // Save to Firebase
-      await saveAlmSettings(almSettings);
+      await Promise.all([
+        saveAlmSettings(almSettings),
+        saveApiSettings(apiSettings),
+      ]);
       onClose();
     } catch (error) {
-      console.error('Failed to save ALM settings:', error);
+      console.error('Failed to save settings:', error);
     } finally {
       setIsLoading(false);
     }
@@ -155,6 +167,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                     <input
                       type="password"
                       placeholder="Enter your Gemini API key"
+                      value={apiSettings.geminiApiKey}
+                      onChange={(e) => setApiSettings(prev => ({ ...prev, geminiApiKey: e.target.value }))}
                       className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
                     />
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
@@ -176,6 +190,20 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                     <input
                       type="url"
                       placeholder="http://localhost:11434"
+                      value={apiSettings.ollamaUrl}
+                      onChange={(e) => setApiSettings(prev => ({ ...prev, ollamaUrl: e.target.value }))}
+                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                      Ollama Model (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g., llama3"
+                      value={apiSettings.ollamaModel}
+                      onChange={(e) => setApiSettings(prev => ({ ...prev, ollamaModel: e.target.value }))}
                       className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
                     />
                   </div>

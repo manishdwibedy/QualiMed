@@ -12,7 +12,7 @@ import { useAuth } from './components/AuthProvider';
 import Login from './components/Login';
 import Navbar from './components/Navbar';
 import { enableAuth } from './config';
-import { loadAlmSettings, AlmSettings } from './services/settingsService';
+import { loadAlmSettings, AlmSettings, loadApiSettings, ApiSettings } from './services/settingsService';
 import { logAnalyticsEvent } from './services/analyticsService';
 
 // Configure the PDF.js worker to enable text extraction.
@@ -32,10 +32,14 @@ const AppContent: React.FC = () => {
   useEffect(() => {
     const loadSettings = async () => {
       try {
-        const settings = await loadAlmSettings();
-        setAlmSettings(settings);
+        const [almSettingsData, apiSettingsData] = await Promise.all([
+          loadAlmSettings(),
+          loadApiSettings(),
+        ]);
+        setAlmSettings(almSettingsData);
+        setApiSettings(apiSettingsData);
       } catch (error) {
-        console.error('Failed to load ALM settings:', error);
+        console.error('Failed to load settings:', error);
       }
     };
     loadSettings();
@@ -69,6 +73,12 @@ const AppContent: React.FC = () => {
     apiKey: '',
     ollamaUrl: 'http://localhost:11434',
     ollamaModel: 'llama3',
+  });
+
+  const [apiSettings, setApiSettings] = useState<ApiSettings>({
+    geminiApiKey: '',
+    ollamaUrl: '',
+    ollamaModel: '',
   });
 
   const handleRequirementChange = (newRequirement: string) => {
@@ -321,6 +331,7 @@ ${tc.expectedResult}
             onGenerationConfigChange={setGenerationConfig}
             modelConfig={modelConfig}
             onModelConfigChange={setModelConfig}
+            apiSettings={apiSettings}
           />
           
           {batchStatus.length > 0 && <BatchStatusDisplay status={batchStatus} isProcessing={isLoading} />}

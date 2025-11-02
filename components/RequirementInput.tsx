@@ -1,7 +1,7 @@
 import React, { useCallback, useState, useEffect } from 'react';
 import { useDropzone, FileRejection } from 'react-dropzone';
 import { FileIcon, UploadCloudIcon, XIcon, XCircleIcon, SettingsIcon, ServerIcon, KeyIcon } from './Icons';
-import { type GenerationConfig, type ModelConfig, ModelProvider } from '../types';
+import { type GenerationConfig, type ModelConfig, ModelProvider, type ApiSettings } from '../types';
 import { logAnalyticsEvent } from '../services/analyticsService';
 
 interface RequirementInputProps {
@@ -15,6 +15,7 @@ interface RequirementInputProps {
   onGenerationConfigChange: (config: GenerationConfig) => void;
   modelConfig: ModelConfig;
   onModelConfigChange: (config: ModelConfig) => void;
+  apiSettings: ApiSettings;
 }
 
 const SliderControl: React.FC<{
@@ -44,10 +45,10 @@ const SliderControl: React.FC<{
     </div>
 );
 
-export const RequirementInput: React.FC<RequirementInputProps> = ({ 
-  requirement, 
-  setRequirement, 
-  onGenerate, 
+export const RequirementInput: React.FC<RequirementInputProps> = ({
+  requirement,
+  setRequirement,
+  onGenerate,
   isLoading,
   files,
   onFilesChange,
@@ -55,6 +56,7 @@ export const RequirementInput: React.FC<RequirementInputProps> = ({
   onGenerationConfigChange,
   modelConfig,
   onModelConfigChange,
+  apiSettings,
 }) => {
   const [rejectedFiles, setRejectedFiles] = useState<FileRejection[]>([]);
   const [newCategory, setNewCategory] = useState('');
@@ -298,33 +300,36 @@ export const RequirementInput: React.FC<RequirementInputProps> = ({
                      {modelConfig.provider === ModelProvider.GEMINI && (
                         <div className="relative animate-fade-in">
                            <KeyIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                           <input 
+                           <input
                                type="password"
-                               placeholder="Enter your Gemini API Key (optional, uses project default)"
-                               value={modelConfig.apiKey}
+                               placeholder="Enter your Gemini API Key (optional, uses settings default)"
+                               value={modelConfig.apiKey || apiSettings.geminiApiKey}
                                onChange={(e) => handleModelConfigChange('apiKey', e.target.value)}
                                disabled={isDisabled}
                                className="w-full pl-10 p-2 bg-slate-100 dark:bg-slate-700 border-2 border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
                            />
+                           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                             Leave empty to use API key from settings
+                           </p>
                         </div>
                      )}
                      {modelConfig.provider === ModelProvider.OLLAMA && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-fade-in">
                            <div className="relative">
                               <ServerIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                              <input 
+                              <input
                                   type="text"
                                   placeholder="Ollama Server URL"
-                                  value={modelConfig.ollamaUrl}
+                                  value={modelConfig.ollamaUrl || apiSettings.ollamaUrl}
                                   onChange={(e) => handleModelConfigChange('ollamaUrl', e.target.value)}
                                   disabled={isDisabled}
                                   className="w-full pl-10 p-2 bg-slate-100 dark:bg-slate-700 border-2 border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
                               />
                            </div>
-                           <input 
+                           <input
                               type="text"
                               placeholder="Model Name (e.g., llama3)"
-                              value={modelConfig.ollamaModel}
+                              value={modelConfig.ollamaModel || apiSettings.ollamaModel}
                               onChange={(e) => handleModelConfigChange('ollamaModel', e.target.value)}
                               disabled={isDisabled}
                               className="w-full p-2 bg-slate-100 dark:bg-slate-700 border-2 border-slate-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500"

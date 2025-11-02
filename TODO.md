@@ -1,16 +1,13 @@
-# Firebase Analytics Implementation Plan
+# TODO: Add Gemini API Key Feature
 
 ## Tasks
-- [x] Update firebase.ts: Initialize Firebase Analytics and export it
-- [x] Create analytics utility: Add helper function for logging custom events
-- [x] Add tracking to Login.tsx: Track login events (Google and email)
-- [x] Add tracking to Navbar.tsx: Track logout, theme toggle, profile modal open
-- [x] Add tracking to App.tsx: Track test case generation start/completion
-- [x] Add tracking to TestCaseDisplay.tsx: Track export actions (JSON, Markdown, PDF)
-- [x] Add tracking to AlmStatusCell.tsx: Track ALM ticket creation attempts/success
-- [x] Add tracking to RequirementInput.tsx: Track file uploads
+- [x] Extend settingsService.ts: Add ApiSettings interface and load/save functions for API keys
+- [x] Update types.ts: Add ApiSettings interface if needed
+- [x] Update SettingsModal.tsx: Connect API Keys tab to load/save API keys from Firestore
+- [x] Update RequirementInput.tsx: Remove local API key input, load from settings instead
+- [x] Update geminiService.ts: Disable mock mode for testing
 
 ## Followup Steps
-- [ ] Test analytics events in Firebase console
-- [ ] Ensure no performance impact on user interactions
-- [ ] Verify events are firing correctly in development
+- [x] Test API key storage and retrieval
+- [x] Verify API key usage in test case generation
+- [x] Ensure user authentication is required

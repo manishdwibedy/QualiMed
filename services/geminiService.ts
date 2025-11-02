@@ -5,7 +5,7 @@ import { type GeneratedTestCaseData, type GenerationConfig, type ModelConfig, Mo
 
 // --- TESTING FLAG ---
 // Set this to true to use mock data instead of real API calls
-const USE_MOCK_DATA = true;
+const USE_MOCK_DATA = false;
 
 /**
  * Generates mock test cases for testing purposes without making real API calls.

@@ -81,3 +81,9 @@ export interface ModelConfig {
   ollamaUrl: string;
   ollamaModel: string;
 }
+
+export interface ApiSettings {
+  geminiApiKey: string;
+  ollamaUrl: string;
+  ollamaModel: string;
+}

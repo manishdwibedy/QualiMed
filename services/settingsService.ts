@@ -23,6 +23,12 @@ export interface AlmSettings {
   };
 }
 
+export interface ApiSettings {
+  geminiApiKey: string;
+  ollamaUrl: string;
+  ollamaModel: string;
+}
+
 const DEFAULT_ALM_SETTINGS: AlmSettings = {
   jira: {
     instanceUrl: '',
@@ -42,6 +48,12 @@ const DEFAULT_ALM_SETTINGS: AlmSettings = {
     password: '',
     projectId: '',
   },
+};
+
+const DEFAULT_API_SETTINGS: ApiSettings = {
+  geminiApiKey: '',
+  ollamaUrl: '',
+  ollamaModel: '',
 };
 
 export const loadAlmSettings = async (): Promise<AlmSettings> => {
@@ -70,4 +82,32 @@ export const saveAlmSettings = async (settings: AlmSettings): Promise<void> => {
 
   const docRef = doc(db, 'userSettings', user.uid);
   await setDoc(docRef, { almSettings: settings }, { merge: true });
+};
+
+export const loadApiSettings = async (): Promise<ApiSettings> => {
+  const auth = getAuth();
+  const user = auth.currentUser;
+  if (!user) {
+    throw new Error('User not authenticated');
+  }
+
+  const docRef = doc(db, 'userSettings', user.uid);
+  const docSnap = await getDoc(docRef);
+
+  if (docSnap.exists()) {
+    return docSnap.data().apiSettings || DEFAULT_API_SETTINGS;
+  } else {
+    return DEFAULT_API_SETTINGS;
+  }
+};
+
+export const saveApiSettings = async (settings: ApiSettings): Promise<void> => {
+  const auth = getAuth();
+  const user = auth.currentUser;
+  if (!user) {
+    throw new Error('User not authenticated');
+  }
+
+  const docRef = doc(db, 'userSettings', user.uid);
+  await setDoc(docRef, { apiSettings: settings }, { merge: true });
 };
