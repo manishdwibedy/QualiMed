@@ -69,7 +69,7 @@ function buildJiraDescription(testCase: TestCase, requirements?: Requirement[]) 
 /**
  * [REAL IMPLEMENTATION] Creates a real test case issue in Jira via backend API to avoid CORS.
  */
-async function createJiraTicketReal(testCase: TestCase, jiraConfig?: { instanceUrl: string; userEmail: string; apiToken: string; projectKey: string }, requirements?: Requirement[]): Promise<AlmResult> {
+async function createJiraTicketReal(testCase: TestCase, requirements?: Requirement[], jiraConfig?: { instanceUrl: string; userEmail: string; apiToken: string; projectKey: string }): Promise<AlmResult> {
     const requirement = requirements?.find(r => r.id === testCase.requirementId);
     let requirementText = testCase.requirement;
     if (requirement) {
@@ -180,13 +180,13 @@ async function createJiraTicketSimulated(testCase: TestCase, requirements?: Requ
  * Creates a new test case issue in Jira.
  * Toggles between the real and simulated implementations.
  */
-async function createJiraTicket(testCase: TestCase, jiraConfig?: { instanceUrl: string; userEmail: string; apiToken: string; projectKey: string }, requirements?: Requirement[]): Promise<AlmResult> {
+async function createJiraTicket(testCase: TestCase, requirements?: Requirement[], jiraConfig?: { instanceUrl: string; userEmail: string; apiToken: string; projectKey: string }): Promise<AlmResult> {
   // --- TOGGLE BETWEEN REAL AND SIMULATED ---
   // To use the REAL Jira API, comment out the line below:
-  //   return createJiraTicketSimulated(testCase, requirements);
+  // return createJiraTicketSimulated(testCase, requirements);
 
   // And uncomment this line:
-  return createJiraTicketReal(testCase, jiraConfig, requirements);
+  return createJiraTicketReal(testCase, requirements, jiraConfig);
 }
 
 /**
@@ -363,7 +363,7 @@ export async function createAlmTicket(testCase: TestCase, platform: ALMPlatform,
 
   switch (platform) {
     case ALMPlatform.JIRA:
-      return createJiraTicket(testCase, jiraConfig, requirements);
+      return createJiraTicket(testCase, requirements, jiraConfig);
     case ALMPlatform.POLARION:
         return createPolarionWorkItem(testCase, polarionConfig);
     case ALMPlatform.AZURE_DEVOPS:
