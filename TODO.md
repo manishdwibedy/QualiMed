@@ -1,7 +1,6 @@
-# TODO: Fix Jira Ticket Creation to Call Backend Instead of Simulating
+# TODO: Add CORS to Flask App
 
-- [x] Update `services/jiraService.ts` to import `base_url` from config and make a POST request to `${base_url}/create/jira`
-- [x] Simplify payload to match backend expectations: `summary` (testCase.title), `description` (stringified content), `projectKey` ('HTP' or from config), `issuetype` ('Test Case')
-- [x] Parse response: success if status_code 201, issueKey from response.response.key, else error
-- [ ] Test the integration by running the app and creating a Jira ticket
-- [ ] Ensure Jira credentials are configured in the backend
+- [x] Update `backend/requirements.txt` to add `Flask-CORS` dependency
+- [x] Edit `backend/app.py` to import CORS from flask_cors and enable it for the app
+- [x] Install updated dependencies using `pip install -r backend/requirements.txt`
+- [ ] Test the Flask app to ensure CORS is working (e.g., make cross-origin requests)

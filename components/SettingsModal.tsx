@@ -5,6 +5,7 @@ import { JiraConfig } from './JiraConfig';
 import { AzureDevOpsConfig } from './AzureDevOpsConfig';
 import { PolarionConfig } from './PolarionConfig';
 import { loadAlmSettings, saveAlmSettings, AlmSettings } from '../services/settingsService';
+import { base_url } from '../config';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -39,7 +40,68 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
   const handleSave = async () => {
     setIsLoading(true);
     try {
+      // Save to Firebase first
       await saveAlmSettings(almSettings);
+
+      // Save credentials to backend
+      const savePromises = [];
+
+      if (almSettings.jira.instanceUrl && almSettings.jira.userEmail && almSettings.jira.apiToken) {
+        savePromises.push(
+          fetch(`${base_url}/credentials/jira`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              baseUrl: almSettings.jira.instanceUrl,
+              email: almSettings.jira.userEmail,
+              apiToken: almSettings.jira.apiToken,
+            }),
+          })
+        );
+      }
+
+      if (almSettings.polarion.serverUrl && almSettings.polarion.username && almSettings.polarion.password) {
+        savePromises.push(
+          fetch(`${base_url}/credentials/polarion`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              baseUrl: almSettings.polarion.serverUrl,
+              username: almSettings.polarion.username,
+              password: almSettings.polarion.password,
+            }),
+          })
+        );
+      }
+
+      if (almSettings.azureDevOps.organization && almSettings.azureDevOps.personalAccessToken) {
+        savePromises.push(
+          fetch(`${base_url}/credentials/azure`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              organization: almSettings.azureDevOps.organization,
+              personalAccessToken: almSettings.azureDevOps.personalAccessToken,
+            }),
+          })
+        );
+      }
+
+      // Wait for all credential saves to complete
+      if (savePromises.length > 0) {
+        const responses = await Promise.all(savePromises);
+        const failedSaves = responses.filter(response => !response.ok);
+        if (failedSaves.length > 0) {
+          console.warn('Some credentials failed to save to backend:', failedSaves);
+        }
+      }
+
       onClose();
     } catch (error) {
       console.error('Failed to save ALM settings:', error);
