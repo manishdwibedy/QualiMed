@@ -78,7 +78,7 @@ async function createJiraTicketReal(testCase: TestCase, jiraConfig?: { instanceU
         summary: testCase.title,
         description: description,
         projectKey: jiraConfig?.projectKey || almConfig.jira?.projectKey || 'HTP',
-        issuetype: 'Test Case'
+        issuetype: 'Bug'
     };
 
     console.log(`[REAL][${ALMPlatform.JIRA}] Backend Payload:`, JSON.stringify(payload, null, 2));

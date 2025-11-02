@@ -80,7 +80,7 @@ def create_jira_test_case():
         elif isinstance(raw_type, str):
             issue_type = {"name": raw_type}
         else:
-            issue_type = {"name": os.getenv("JIRA_ISSUE_TYPE", "Bug")}
+            issue_type = {"name": os.getenv("JIRA_ISSUE_TYPE", "Story")}
         # Build Jira API payload
         jira_payload = {
             "fields": {
@@ -118,7 +118,9 @@ def create_jira_test_case():
             resp_json = resp.json()
         except ValueError:
             resp_json = {"raw": resp.text}
+        logger.info(f"Jira API response: {resp_json}")
         logger.info(f"Jira API response status: {resp.status_code}")
+        logger.info(f"Jira API jira_payload: {jira_payload}")
         return jsonify({"status_code": resp.status_code, "response": resp_json}), resp.status_code
     except Exception as e:
         logger.error(f"Error creating Jira test case: {str(e)}")
